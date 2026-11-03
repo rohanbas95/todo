@@ -1,7 +1,7 @@
 // Offline support: keeps a copy of the app files so it opens without internet.
 // Your lists and notes are NOT stored here - they live in the browser's localStorage (and Google Drive if synced).
 // Bump VERSION whenever you want to force every device to drop its old cached copy.
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'todo-list-' + VERSION;
 const FILES = ['./', './index.html', './app.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
