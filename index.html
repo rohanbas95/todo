@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Switch Lists</title>
+<script>
+  // Apply the saved theme before anything is drawn so the page never flashes the wrong one
+  try {
+    const t = localStorage.getItem("jobSwitchLists.v1.theme");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  } catch {}
+</script>
+<style>
+  /* Theme: follows the device unless Light or Dark is picked in Settings (html[data-theme]) */
+  :root {
+    color-scheme: light;
+    --bg: #f4f4f2;
+    --surface: #fcfcfb;
+    --border: #e4e3df;
+    --text: #0b0b0b;
+    --muted: #7a7974;
+    --accent: #2a78d6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --bg: #111110;
+      --surface: #1a1a19;
+      --border: #2e2e2b;
+      --text: #f0efec;
+      --muted: #8f8e86;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #111110;
+    --surface: #1a1a19;
+    --border: #2e2e2b;
+    --text: #f0efec;
+    --muted: #8f8e86;
+  }
+  :root {
+    --chip: color-mix(in srgb, var(--text) 7%, transparent);
+    --hover: color-mix(in srgb, var(--text) 5%, transparent);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 2px 10px rgba(0, 0, 0, .04);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  main { height: 100vh; display: flex; flex-direction: column; gap: 12px; padding: 14px 20px 8px; }
+
+  /* Top bar: page tabs + Google sync status */
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  nav { display: flex; gap: 2px; padding: 3px; background: var(--chip); border-radius: 999px; overflow-x: auto; }
+  nav button {
+    font-weight: 600; color: var(--muted); cursor: pointer; white-space: nowrap;
+    background: none; border: none; border-radius: 999px; padding: 5px 14px;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  .gbox { margin-left: auto; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); cursor: pointer; white-space: nowrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px;
+  }
+  .pill:hover { color: var(--text); }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--muted)); }
+  .pill.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Toolbar on list pages: search + status filter */
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .toolbar:empty { display: none; }
+  .search { position: relative; flex: 0 1 320px; }
+  .search::before { content: "🔍"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; opacity: .55; }
+  .search input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 6px 30px 6px 32px; }
+  .search input:focus { outline: none; border-color: var(--accent); }
+  .search kbd {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%); pointer-events: none;
+    font: 11px ui-monospace, monospace; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; padding: 0 5px;
+  }
+  .search input:not(:placeholder-shown) + kbd { display: none; }
+  .hint { margin-left: auto; font-size: 12px; color: var(--muted); }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  .seg button { padding: 5px 12px; border: none; background: none; cursor: pointer; font-size: 13px; }
+  .seg button + button { border-left: 1px solid var(--border); }
+  .seg button:hover { background: var(--hover); }
+  .seg button.on { background: var(--accent); color: #fff; }
+  .btn {
+    display: inline-block; padding: 5px 12px; cursor: pointer; font-size: 13px; white-space: nowrap;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .btn:hover { background: var(--hover); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger { color: #dc2626; border-color: color-mix(in srgb, #dc2626 35%, var(--border)); }
+  .btn.danger:hover { background: #dc2626; color: #fff; }
+
+  /* Horizontal board: columns scroll vertically on their own, the board scrolls sideways */
+  .board {
+    flex: 1; min-height: 0; display: flex; gap: 14px; align-items: stretch;
+    overflow-x: auto; overflow-y: hidden; padding-bottom: 10px; scroll-snap-type: x proximity;
+    scrollbar-width: auto; scrollbar-color: var(--muted) var(--border);
+  }
+  .board::-webkit-scrollbar { height: 12px; }
+  .board::-webkit-scrollbar-track { background: var(--border); border-radius: 6px; }
+  .board::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 6px; }
+  .page { flex: 1; min-height: 0; overflow-y: auto; }
+
+  .card {
+    --track: color-mix(in srgb, var(--accent) 20%, transparent);
+    position: relative; flex: 0 0 340px; overflow-y: auto; scroll-snap-align: start;
+    background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--accent);
+    border-radius: 12px; padding: 0 14px 14px; box-shadow: var(--shadow);
+  }
+  .card.notes { flex-basis: 420px; display: flex; flex-direction: column; }
+  .head { position: sticky; top: 0; background: var(--surface); padding: 12px 0 2px; z-index: 1; }
+  .card h2 { font-size: 15px; margin: 0 0 8px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .card h2 .count { font-weight: 400; color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .meter { display: flex; height: 5px; background: var(--track); border-radius: 3px; overflow: hidden; margin-bottom: 6px; }
+  .meter > span { height: 100%; background: var(--accent); transition: width .2s; }
+  .meter > span.doing { opacity: .45; }
+
+  /* Collapsible section headings */
+  .sec {
+    display: flex; align-items: center; gap: 6px; margin: 10px 0 2px; padding: 3px 0; cursor: pointer; user-select: none;
+    font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--accent);
+  }
+  .sec::before { content: "▾"; width: 10px; font-size: 10px; color: var(--muted); }
+  .sec.closed::before { content: "▸"; }
+  .sec .n { margin-left: auto; font-weight: 500; letter-spacing: 0; color: var(--muted); }
+  .today { font-size: 10px; background: var(--accent); color: #fff; border-radius: 999px; padding: 0 7px; letter-spacing: 0; }
+
+  .item { display: flex; gap: 9px; align-items: flex-start; padding: 4px 6px; margin: 0 -6px; border-radius: 6px; cursor: pointer; user-select: none; }
+  .item:hover { background: var(--hover); }
+  .item .txt { flex: 1; min-width: 0; }
+  .item.done .name { color: var(--muted); text-decoration: line-through; }
+  .item .sub { color: var(--muted); font-size: 12px; }
+  .item .acts { display: flex; gap: 2px; opacity: 0; }
+  .item:hover .acts, .item:focus-within .acts { opacity: 1; }
+  @media (hover: none) { .item .acts { opacity: 1; } }
+  .act { border: none; background: none; color: var(--muted); cursor: pointer; padding: 0 5px; border-radius: 4px; }
+  .act:hover { color: var(--text); background: var(--hover); }
+  .item.editing input { flex: 1; padding: 3px 8px; background: var(--bg); border: 1px solid var(--accent); border-radius: 6px; outline: none; }
+  mark { background: color-mix(in srgb, #facc15 45%, transparent); color: inherit; border-radius: 2px; }
+  .empty { color: var(--muted); font-size: 12.5px; padding: 2px 0 2px 19px; }
+
+  /* Status circle: empty = to do, half = in progress, filled = done */
+  .st {
+    flex: none; width: 16px; height: 16px; margin-top: 2px; padding: 0; cursor: pointer;
+    border: 2px solid var(--muted); border-radius: 50%; background: none;
+    color: #fff; font-size: 10px; line-height: 12px; font-weight: 700;
+  }
+  .st:hover { border-color: var(--accent); }
+  .st.doing { border-color: var(--accent); background: linear-gradient(90deg, var(--accent) 50%, transparent 50%); }
+  .st.done { border-color: var(--accent); background: var(--accent); }
+  .st.done::after { content: "✓"; }
+
+  /* Notes column */
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .chip { font-size: 12px; padding: 1px 9px; cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 999px; }
+  .chip:hover { background: var(--hover); }
+  .chip.active { background: var(--c); border-color: var(--c); color: #fff; }
+  .chip.has::after { content: " •"; color: var(--c); }
+  .chip.active.has::after { color: #fff; }
+  .notes textarea:focus { outline: none; border-color: var(--accent); }
+
+  /* Add forms */
+  form { display: flex; gap: 6px; margin-top: 12px; }
+  form input, form select, textarea { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 5px 8px; }
+  form input:focus, form select:focus { outline: none; border-color: var(--accent); }
+  form input { flex: 1; min-width: 0; }
+  form select { padding: 5px 4px; }
+  form button { border: none; border-radius: 8px; padding: 5px 12px; background: var(--accent); color: #fff; cursor: pointer; }
+  textarea { flex: 1; width: 100%; resize: none; min-height: 160px; padding: 10px; }
+
+  /* Settings: one simple column */
+  .settings-wrap { max-width: 680px; margin: 4px auto 40px; display: flex; flex-direction: column; gap: 14px; }
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; box-shadow: var(--shadow); }
+  .panel h2 { font-size: 15px; margin: 0 0 4px; }
+  .panel p { margin: 6px 0; }
+  .panel .seg { margin-top: 6px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0 2px; margin-top: 10px; border-top: 1px solid var(--border); }
+  .small { font-size: 12px; color: var(--muted); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+
+  /* Toast with optional Undo */
+  .toast {
+    position: fixed; left: 50%; bottom: 28px; z-index: 10; transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+    display: flex; gap: 12px; align-items: center; padding: 8px 10px 8px 16px; font-size: 13px;
+    background: var(--text); color: var(--bg); border-radius: 10px; box-shadow: 0 8px 24px rgba(0, 0, 0, .2); transition: .2s;
+  }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+  .toast button { background: none; border: none; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 2px 6px; }
+
+  @media (max-width: 700px) {
+    main { padding: 10px 10px 6px; gap: 10px; }
+    .card { flex-basis: 86vw; }
+    .hint { display: none; }
+    .search { flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <nav id="tabs" aria-label="Pages"></nav>
+    <div class="gbox" id="gbox"></div>
+  </header>
+  <div class="toolbar" id="toolbar"></div>
+  <div class="board" id="app"></div>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// Each list: title, colour, what "checked" means, and grouped items. Items are "Name" or "Name | detail".
+const LISTS = [
+  {
+    id: "courses", title: "📚 My courses", color: "#2a78d6", checked: "done",
+    groups: [
+      ["KodeKloud", [
+        "Linux & Docker labs", "CKA course + labs + mock exams",
+        "AWS Certified DevOps Engineer – Professional (DOP-C02)",
+        "Terraform, GitHub Actions, ArgoCD/GitOps courses", "DevSecOps / Kubernetes security courses",
+        "Prometheus / Grafana / observability courses", "AI / MLOps / LLM courses",
+        "Ansible | included in subscription", "Istio / service mesh | included in subscription",
+        "Go basics | included in subscription",
+      ]],
+      ["Hussein Nasser · Udemy", [
+        "Fundamentals of Network Engineering", "Python on the Backend",
+        "Introduction to NGINX", "Fundamentals of Database Engineering",
+      ]],
+      ["Gaurav Sen", ["LLM course", "System Design course"]],
+      ["Anthropic Academy (free)", [
+        "Building with the Claude API", "Claude with Amazon Bedrock",
+        "Introduction to MCP", "Claude Code in Action",
+      ]],
+      ["Others", [
+        "AWS course | Shobhan", "DSA course | TFPlus", "ByteByteGo | subscription",
+        "GH-600: Developing in Agentic AI Systems | Microsoft Learn",
+        "Simple AWS | newsletter", "Hello World | newsletter",
+      ]],
+      ["Free resources", [
+        "Kubernetes the Hard Way | Kelsey Hightower", "Google SRE Book | sre.google",
+        "Learn Go with Tests", "DevOps Roadmap | roadmap.sh/devops, use as a checklist",
+        "System Design Primer | GitHub, donnemartin", "NeetCode 150 | neetcode.io, easy + medium",
+      ]],
+      ["Parked (after the switch)", [
+        "CKS: Certified Kubernetes Security Specialist | KodeKloud",
+        "Advanced JavaScript | Andrei Neagoie", "Namaste JavaScript", "Namaste Node.js",
+        "Namaste React", "Namaste Frontend System Design",
+      ]],
+    ],
+  },
+  {
+    id: "companies", title: "🏢 Companies to apply", color: "#0d9488", checked: "applied",
+    groups: [
+      ["Tier 0 · Dream / stretch", [
+        "Google", "Microsoft", "Amazon (AWS)", "Apple", "Nvidia", "LinkedIn", "Uber", "Atlassian", "Salesforce",
+        "D. E. Shaw", "Tower Research", "Graviton", "WorldQuant",
+        "Databricks", "Snowflake", "Confluent", "Zscaler", "AMD", "Rippling", "Glean",
+      ]],
+      ["Tier 1 · Main targets", [
+        "Oracle (OCI)", "Palo Alto Networks", "Intuit", "Adobe", "ServiceNow", "Nutanix", "Rubrik", "Postman",
+        "Sprinklr", "Sumo Logic", "Akamai", "Freshworks", "Cisco", "Arista", "NetApp",
+        "Razorpay", "CRED", "PhonePe", "Groww", "Zeta", "Flipkart", "Swiggy", "Zomato (Eternal)", "Meesho", "JioHotstar",
+        "PayPal", "Visa", "Walmart Global Tech", "Expedia", "Arcesium", "Codenation", "Directi / Media.net", "InMobi",
+        "Harness", "BrowserStack", "Chargebee", "UBS", "Cloudera",
+        "Red Hat", "Cohesity", "Okta", "Twilio", "Workday", "Grab", "Sarvam AI",
+      ]],
+      ["Tier 2 · Strong backups", [
+        "Goldman Sachs", "JPMorgan", "Morgan Stanley", "American Express", "Mastercard", "Deutsche Bank", "Citi",
+        "Morningstar", "FirstRand", "Target", "Tesco", "GE Healthcare", "SAP", "Dell", "MathWorks", "Informatica",
+        "Broadcom / VMware", "Juniper (HPE)", "EdgeVerve", "Myntra", "Nykaa", "Paytm", "PayU", "Delhivery",
+        "Digit Insurance", "ShareChat", "Qualcomm", "Intel", "Samsung R&D", "ARM", "Synopsys", "Cadence",
+        "MediaTek", "NXP", "Infineon", "Texas Instruments", "Western Digital", "Sandisk", "Siemens EDA (Mentor)",
+        "Bain", "BCG (BCG X)", "McKinsey (Digital)", "Druva", "Autodesk",
+      ]],
+      ["Tier 3 · Practice & first offer", [
+        "CoinDCX", "Turtlemint", "BankBazaar", "Cure.fit", "Udaan", "Ola", "OYO", "Practo", "PharmEasy", "Motorq",
+        "Aurigo", "Alphonso", "Vizury", "Riverbed", "Zynga", "Briq", "nference", "Skit.ai", "Schrödinger",
+        "Deltatre", "Thoughtworks", "Publicis Sapient", "StatusNeo", "Hoonartek", "Zepto",
+      ]],
+    ],
+  },
+  {
+    id: "jobprep", title: "💼 Job prep", color: "#ca8a04", checked: "done",
+    groups: [
+      ["Profile", [
+        "Resume | a number in every bullet, 2 pages max", "LinkedIn headline, About & skills",
+        "GitHub capstone (ai-platform-lab) | README + architecture diagram",
+        "2–4 blog write-ups | networking, K8s, GitOps, AI SRE agent",
+        "Naukri / Instahyre / LinkedIn job profiles updated",
+      ]],
+      ["Applying", [
+        "Referral list | ex-colleagues at target companies", "Recruiter outreach messages",
+        "Apply Tier 3 → 2 → 1 → 0 | earlier offers become your anchor",
+      ]],
+      ["Interview prep", [
+        "Experience inventory | problem → action → result", "8–10 STAR stories",
+        "\"Tell me about yourself\" 2-minute pitch", "Explain your current architecture end to end",
+        "Troubleshooting scenarios | CrashLoopBackOff, DNS failure, node NotReady, high latency, TF state lock",
+        "3+ mock interviews | peers / Pramp", "Questions to ask the interviewer",
+      ]],
+      ["Offer", [
+        "Salary research | Levels.fyi, AmbitionBox, Glassdoor", "Expected CTC answer (₹45–50 LPA)",
+        "Negotiate with competing offers", "Notice period / buyout plan",
+      ]],
+    ],
+  },
+  {
+    id: "projects", title: "🛠️ Projects", color: "#4f46e5", checked: "built",
+    groups: [
+      ["DevOps / platform", [
+        "ai-platform-lab capstone | one repo that grows every month, your main interview story",
+        "EKS from scratch with Terraform | VPC, modules, remote state, GitHub OIDC",
+        "Production-grade Helm chart | probes, HPA, PDB, NetworkPolicy",
+        "GitOps delivery | GitHub Actions → ECR → ArgoCD, canary with Argo Rollouts",
+        "Secure supply chain | Trivy, Syft SBOM, cosign signing, Kyverno enforcement",
+        "Observability stack | Prometheus, Grafana, Loki, Tempo, OTel, SLO dashboard",
+        "Chaos test + postmortem | break the capstone with Chaos Mesh, write it up",
+        "Cost optimisation | OpenCost + Karpenter spot, before/after numbers",
+        "DR drill | Velero backup, restore in another region, measure RTO/RPO",
+        "Ansible hardening role | tested with Molecule",
+        "Kubernetes operator in Go | kubebuilder, e.g. clean up stale namespaces",
+        "Backstage golden path | template that scaffolds a service + pipeline",
+      ]],
+      ["Backend", [
+        "FastAPI service | Postgres, Redis, migrations, pytest, structured logs",
+        "AWS cost / unused-resource reporter CLI | boto3, typer",
+        "Rate limiter service | token bucket in Redis, load test with k6",
+        "URL shortener end to end | API, cache, DB, on K8s, load tested",
+        "Event-driven pipeline | Kafka producer/consumer, DLQ, idempotent consumer",
+        "gRPC service pair | protobuf, mTLS via service mesh",
+        "Log analyzer | stream a 1 GB log, top errors / IPs, constant memory",
+      ]],
+      ["AI", [
+        "Local LLM on Kubernetes | Ollama + Open WebUI",
+        "LLM serving on GPUs | vLLM, KEDA autoscaling, measure tokens/sec and cost",
+        "AI gateway | LiteLLM with per-team rate limits and token cost dashboard",
+        "RAG over runbooks / docs | pgvector, chunking, evals, Langfuse tracing",
+        "MCP server for infra | read-only kubectl, Prometheus, logs tools",
+        "AI SRE agent | alert → investigate via MCP → suggest fix → Slack",
+        "AI PR reviewer | GitHub Action using the Claude API on Terraform / K8s diffs",
+        "Incident summariser | Slack channel + timeline → postmortem draft",
+      ]],
+    ],
+  },
+  {
+    id: "skills", title: "⚙️ DevOps skills", color: "#16a34a", checked: "learned",
+    groups: [
+      ["Programming & scripting", [
+        "Python", "Bash", "Go basics | read/write small tools, understand operators",
+        "awk / sed / jq | text manipulation",
+      ]],
+      ["OS & terminal", [
+        "Linux", "Process & performance monitoring | top, vmstat, iostat, strace, lsof",
+        "Networking tools | dig, curl, ss, tcpdump, traceroute", "Vim",
+      ]],
+      ["Version control", ["Git", "GitHub / GitLab | PRs, branch protection, CODEOWNERS"]],
+      ["Networking & protocols", ["OSI model & TCP/IP", "DNS", "HTTP / HTTPS", "SSL / TLS", "SSH", "CIDR / subnetting"]],
+      ["Web servers & proxies", [
+        "Nginx", "Reverse proxy & load balancer (L4 vs L7)", "Forward proxy & firewall",
+        "Caching | Redis, CDN",
+      ]],
+      ["Cloud", [
+        "AWS (VPC, IAM, EKS)", "AWS ECS / Fargate", "AWS Lambda | serverless",
+        "Azure or GCP | awareness: map AWS services across",
+      ]],
+      ["Containers & orchestration", [
+        "Docker", "Kubernetes", "Helm", "Kustomize", "Karpenter / cluster autoscaling",
+        "Service mesh (Istio / Linkerd)", "Envoy", "Cilium / eBPF | basics",
+      ]],
+      ["IaC & configuration management", [
+        "Terraform", "Ansible", "CloudFormation / CDK | awareness", "Pulumi | awareness",
+      ]],
+      ["CI/CD, GitOps & artifacts", [
+        "GitHub Actions", "Jenkins", "GitLab CI | awareness", "ArgoCD", "Argo Rollouts",
+        "FluxCD | awareness", "Artifactory / Nexus / ECR | artifact management",
+      ]],
+      ["Secrets & security (DevSecOps)", [
+        "Vault / External Secrets", "Sealed Secrets / SOPS", "Trivy", "Syft (SBOM)", "cosign", "Kyverno",
+      ]],
+      ["Observability & SRE", [
+        "Prometheus", "Grafana", "OpenTelemetry", "Loki + Tempo", "Jaeger",
+        "Elastic Stack (ELK / EFK) | log management", "Datadog / Splunk | awareness",
+        "SLOs & error budgets", "Incident management & postmortems", "OpenCost / Kubecost",
+        "Chaos engineering | Chaos Mesh / Litmus",
+      ]],
+      ["Platform engineering", ["Backstage | golden paths, software templates", "Crossplane | awareness"]],
+    ],
+  },
+  {
+    id: "sysdesign", title: "🏗️ System design", color: "#7c3aed", checked: "learned",
+    groups: [
+      ["Fundamentals", [
+        "Scalability | vertical vs horizontal", "Latency vs throughput",
+        "Availability & SLAs | the nines, SLO vs SLA", "CAP & PACELC",
+        "Consistency models | strong, eventual, read-your-writes",
+        "Back-of-envelope estimation | QPS, storage, bandwidth",
+      ]],
+      ["Building blocks", [
+        "Load balancers | algorithms, L4 vs L7, health checks", "DNS & CDN",
+        "Caching | cache-aside, write-through, eviction (LRU), invalidation",
+        "API gateway", "Message queues & pub/sub | Kafka, SQS",
+        "Object / blob storage | S3", "Rate limiting | token bucket, leaky bucket, sliding window",
+        "Consistent hashing", "Service discovery", "Search | Elasticsearch",
+      ]],
+      ["Data at scale", [
+        "SQL vs NoSQL | when to pick which", "Indexing", "Replication | leader-follower, multi-leader, quorum",
+        "Sharding / partitioning | hot keys, resharding", "Denormalisation & read replicas",
+      ]],
+      ["Distributed systems", [
+        "Consensus | Raft basics (etcd uses it)", "Leader election & distributed locks",
+        "Idempotency", "Delivery semantics | at-most / at-least / exactly-once",
+        "Distributed transactions | 2PC vs Saga", "Bloom filters", "Unique ID generation | Snowflake IDs",
+      ]],
+      ["Reliability patterns", [
+        "Timeouts, retries with backoff + jitter", "Circuit breaker & bulkhead",
+        "Graceful degradation & load shedding", "Multi-region active-active vs active-passive",
+        "Disaster recovery | RPO / RTO, backups", "Zero-downtime deploys | blue-green, canary",
+      ]],
+      ["Architecture styles", [
+        "Monolith vs microservices", "Event-driven architecture", "CQRS & event sourcing",
+        "Multi-tenancy | isolation models",
+      ]],
+      ["Classic questions", [
+        "URL shortener", "Rate limiter", "Notification system", "Chat app (WhatsApp)", "News feed",
+        "Distributed cache", "Key-value store", "Payment system", "Ride-hailing (Uber)",
+        "Video streaming (YouTube)", "Web crawler",
+      ]],
+      ["Infra questions (DevOps / SRE)", [
+        "CI/CD for 200 microservices", "Logging pipeline for 1 TB/day", "Monitoring & alerting system",
+        "Multi-region active-active setup", "Multi-tenant Kubernetes platform",
+        "Zero-downtime database migration", "LLM inference platform for 10k RPS",
+        "Secrets management at scale", "Deployment system | like Spinnaker / ArgoCD",
+      ]],
+    ],
+  },
+  {
+    id: "ai", title: "🤖 AI", color: "#db2777", checked: "learned",
+    groups: [
+      ["LLM fundamentals", [
+        "Tokens & context windows", "Transformers & attention | high level only",
+        "Training vs fine-tuning vs inference", "Embeddings", "Quantization",
+        "Sampling | temperature, top-p", "Prompt engineering",
+      ]],
+      ["Using LLM APIs", [
+        "Claude API / OpenAI API", "Tool use / function calling", "Structured outputs",
+        "Streaming", "Prompt caching", "Amazon Bedrock",
+      ]],
+      ["RAG", [
+        "Chunking & embedding pipelines", "Vector DBs | pgvector, Qdrant",
+        "Hybrid search & reranking", "RAG evaluation",
+      ]],
+      ["Agents", [
+        "Agent loop | LLM + tools + loop", "MCP | build a server", "Multi-agent patterns",
+        "Claude Code / AI coding tools", "Guardrails & human-in-the-loop",
+      ]],
+      ["Model serving & AI infra", [
+        "Ollama", "vLLM / KServe", "GPU basics | memory, CUDA, NVIDIA GPU Operator",
+        "Batching & KV cache", "KEDA | autoscale inference", "LiteLLM | AI gateway",
+        "Triton Inference Server | awareness",
+      ]],
+      ["LLMOps", [
+        "Tracing | Langfuse, OTel GenAI", "Evals", "Prompt versioning",
+        "Token cost tracking", "PII handling & safety",
+      ]],
+      ["MLOps (awareness)", ["MLflow", "Kubeflow", "Feature stores"]],
+    ],
+  },
+  {
+    id: "backend", title: "🧩 Backend", color: "#ea580c", checked: "learned",
+    groups: [
+      ["APIs", [
+        "REST design | status codes, versioning, pagination", "gRPC & protobuf",
+        "WebSockets / SSE", "GraphQL | awareness", "Idempotency keys",
+      ]],
+      ["Auth & security", [
+        "OAuth2 / OIDC", "JWT vs sessions", "mTLS", "CORS", "OWASP Top 10",
+      ]],
+      ["Databases", [
+        "SQL | joins, group by, window functions", "Indexes & EXPLAIN",
+        "Transactions & isolation levels", "Connection pooling | PgBouncer",
+        "PostgreSQL operations | backups, replication, failover", "Redis | data types, persistence, eviction",
+        "DynamoDB / MongoDB basics",
+      ]],
+      ["Messaging", [
+        "Kafka | topics, partitions, consumer groups", "RabbitMQ / SQS", "Dead-letter queues & retries",
+      ]],
+      ["Concurrency", [
+        "Processes vs threads", "async / await | Python asyncio", "Locks & race conditions", "Python GIL",
+      ]],
+      ["Building services", [
+        "FastAPI", "Testing | pytest, mocks", "12-factor app", "Structured logging",
+        "Config & feature flags", "Profiling & performance",
+      ]],
+    ],
+  },
+  {
+    id: "dsa", title: "🧮 DSA", color: "#dc2626", checked: "practised",
+    groups: [
+      ["Basics", ["Big-O | time & space", "Arrays", "Strings", "Hash maps & sets"]],
+      ["Patterns", [
+        "Two pointers", "Sliding window", "Prefix sums", "Binary search", "Sorting",
+        "Stack | valid parentheses, monotonic stack", "Queue / deque", "Linked lists",
+        "Recursion & backtracking basics", "Intervals | merge intervals",
+      ]],
+      ["Trees & graphs", [
+        "Binary tree traversals", "Binary search tree", "BFS / DFS", "Heaps / top-K",
+        "Topological sort | dependency ordering", "Union-find | awareness",
+      ]],
+      ["Stretch (Tier 0)", ["Dynamic programming basics", "Tries"]],
+      ["Practical coding rounds", [
+        "Parse a log file, find top IPs / error counts", "Call an API, aggregate JSON",
+        "Implement an LRU cache", "Implement a rate limiter", "Walk a directory tree, find large / duplicate files",
+      ]],
+    ],
+  },
+];
+
+const STORE_KEY = "jobSwitchLists.v1";
+// state: { status: { [key]: "doing" | "done" }, extra: { [listId]: [name, ...] },
+//          notes: { [sectionId]: text }, noteTab: { [pageId]: sectionId }, page: pageId }
+let state = load();
+
+const STATUS_NEXT = { todo: "doing", doing: "done", done: "todo" };
+const STATUS_LABEL = { todo: "To do", doing: "In progress", done: "Done" };
+
+// Weekly planner: same columns style, one section per day. `perGroup` lists let you add items to a chosen section.
+const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const TODAY = DAYS[(new Date().getDay() + 6) % 7];
+const dayGroups = () => DAYS.map(d => [d, []]);
+const PLANNER_LISTS = [
+  { id: "office", title: "💼 Office work", color: "#2563eb", checked: "done", perGroup: true, groups: dayGroups() },
+  { id: "personal", title: "🏠 Personal", color: "#0d9488", checked: "done", perGroup: true, groups: dayGroups() },
+  { id: "gym", title: "🏋️ Gym", color: "#dc2626", checked: "done", perGroup: true, groups: dayGroups() },
+  { id: "diet", title: "🥗 Diet", color: "#16a34a", checked: "done", perGroup: true, groups: dayGroups() },
+];
+
+// Notes sections: one per list in the same colours (plus General on the job page)
+const NOTE_NAMES = {
+  general: "General", courses: "Courses", companies: "Companies", jobprep: "Job prep", projects: "Projects", skills: "DevOps",
+  sysdesign: "System design", ai: "AI", backend: "Backend", dsa: "DSA",
+  office: "Office", personal: "Personal", gym: "Gym", diet: "Diet",
+};
+const noteSections = (lists, extra = []) =>
+  [...extra, ...lists.map(l => ({ id: l.id, color: l.color }))].map(s => ({ ...s, name: NOTE_NAMES[s.id] || s.id }));
+
+const PAGES = [
+  { id: "jobs", title: "🚀 Job switch", lists: LISTS, notes: noteSections(LISTS, [{ id: "general", color: "#64748b" }]) },
+  { id: "planner", title: "📅 Weekly planner", lists: PLANNER_LISTS, notes: noteSections(PLANNER_LISTS) },
+  { id: "settings", title: "⚙️ Settings", render: () => renderSettingsPage() },
+];
+
+function load() {
+  try { return migrate(JSON.parse(localStorage.getItem(STORE_KEY) || "{}")); }
+  catch { return migrate({}); }
+}
+// Fills in defaults and upgrades older saves (also used for data coming from Google Drive)
+function migrate(saved) {
+  const s = { status: {}, extra: {}, notes: {}, noteTab: {}, collapsed: {}, page: "jobs", updatedAt: 0, ...saved };
+  // Older saves only had checkboxes: { checked: { [key]: true } }
+  if (s.checked) { for (const k in s.checked) s.status[k] ||= "done"; delete s.checked; }
+  // Older saves had a single notes string, and one note tab for the only page
+  if (typeof s.notes === "string") s.notes = s.notes ? { general: s.notes } : {};
+  if (typeof s.noteTab === "string") s.noteTab = { jobs: s.noteTab };
+  // The Calendar tab was removed: drop its countdowns and per-date items
+  delete s.countdowns;
+  for (const k of Object.keys(s.extra)) if (k.startsWith("day/")) delete s.extra[k];
+  for (const k of Object.keys(s.status)) if (k.startsWith("day/")) delete s.status[k];
+  if (s.page === "calendar") s.page = "jobs";
+  return s;
+}
+function save() {
+  state.updatedAt = Date.now();
+  localStorage.setItem(STORE_KEY, JSON.stringify(state));
+  scheduleSync();
+}
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const keyOf = (listId, item) => `${listId}:${item.toLowerCase()}`;
+
+// Search and status filter (toolbar), and the added item being edited inline
+let query = "", statusFilter = "all", editing = null; // editing: { list, item }
+
+const filtering = () => !!query || statusFilter !== "all";
+const matches = (item, k) =>
+  (statusFilter === "all" || (state.status[k] || "todo") === statusFilter) && (!query || item.toLowerCase().includes(query));
+
+// Escapes text and wraps search matches in <mark>
+function hl(text) {
+  if (!query) return esc(text);
+  const lower = text.toLowerCase();
+  let out = "", i = 0;
+  for (let j; (j = lower.indexOf(query, i)) !== -1; i = j + query.length) {
+    out += esc(text.slice(i, j)) + `<mark>${esc(text.slice(j, j + query.length))}</mark>`;
+  }
+  return out + esc(text.slice(i));
+}
+
+function itemRow(listId, item, custom) {
+  if (editing && editing.list === listId && editing.item === item) {
+    return `<div class="item editing"><input data-edit value="${esc(item)}" aria-label="Edit item"></div>`;
+  }
+  const [name, sub] = item.split(" | ");
+  const k = keyOf(listId, item), s = state.status[k] || "todo";
+  return `<div class="item ${s}" data-key="${esc(k)}">
+    <button class="st ${s}" title="${STATUS_LABEL[s]}, click to change" aria-label="${esc(name)}: ${STATUS_LABEL[s]}"></button>
+    <span class="txt"><span class="name">${hl(name)}</span>${sub ? ` <span class="sub">· ${hl(sub)}</span>` : ""}</span>
+    ${custom ? `<span class="acts">
+      <button class="act" data-edit-list="${esc(listId)}" data-edit-item="${esc(item)}" title="Edit">✎</button>
+      <button class="act" data-del-list="${esc(listId)}" data-del="${esc(item)}" title="Remove">✕</button>
+    </span>` : ""}
+  </div>`;
+}
+
+function renderNotes(page) {
+  const cur = page.notes.find(s => s.id === state.noteTab[page.id]) || page.notes[0];
+  return `
+    <section class="card notes" style="--accent:${cur.color}">
+      <div class="head"><h2>📝 Notes<span class="count">auto-saved</span></h2></div>
+      <div class="chips">${page.notes.map(s => `<button class="chip ${s.id === cur.id ? "active" : ""} ${state.notes[s.id] ? "has" : ""}"
+        style="--c:${s.color}" data-note="${s.id}">${esc(s.name)}</button>`).join("")}</div>
+      <textarea id="notes" data-section="${cur.id}" placeholder="${esc(cur.name)} notes…">${esc(state.notes[cur.id] || "")}</textarea>
+    </section>`;
+}
+
+// Sections to show for a list. Each section has a storage key: the list id, or "list/section" for perGroup
+// lists, so the same text on two days keeps two separate statuses.
+function sectionsOf(l) {
+  const secs = l.groups.map(([name, items]) => {
+    const key = l.perGroup ? `${l.id}/${name}` : l.id;
+    const extra = l.perGroup ? state.extra[key] || [] : [];
+    return { name, key, items: [...items.map(i => [i, false]), ...extra.map(i => [i, true])] };
+  });
+  const extra = l.perGroup ? [] : state.extra[l.id] || [];
+  if (extra.length) secs.push({ name: "Added by me", key: l.id, items: extra.map(i => [i, true]) });
+  return secs;
+}
+
+function renderList(l) {
+  const secs = sectionsOf(l);
+  const keys = secs.flatMap(s => s.items.map(([i]) => keyOf(s.key, i)));
+  const count = st => keys.filter(k => state.status[k] === st).length;
+  const done = count("done"), doing = count("doing");
+  const w = n => (keys.length ? (n / keys.length) * 100 : 0);
+  const body = secs.map(s => {
+    const rows = s.items.filter(([i]) => matches(i, keyOf(s.key, i)));
+    if (filtering() && !rows.length) return "";
+    const id = `${l.id}::${s.name}`;
+    const open = filtering() || !state.collapsed[id]; // a search always shows its matches
+    const secDone = s.items.filter(([i]) => state.status[keyOf(s.key, i)] === "done").length;
+    const isToday = l.perGroup && s.name === TODAY;
+    return `<h3 class="sec ${open ? "" : "closed"}" data-sec="${esc(id)}" ${isToday ? "data-today" : ""}>
+        ${esc(s.name)}${isToday ? '<span class="today">today</span>' : ""}
+        <span class="n">${s.items.length ? `${secDone}/${s.items.length}` : ""}</span></h3>
+      ${open ? (rows.length ? rows.map(([i, custom]) => itemRow(s.key, i, custom)).join("") : '<div class="empty">Nothing yet</div>') : ""}`;
+  }).join("");
+  return `<section class="card" style="--accent:${l.color}">
+    <div class="head">
+      <h2>${l.title}<span class="count">${doing ? `◐ ${doing} · ` : ""}${done} / ${keys.length} ${l.checked}</span></h2>
+      <div class="meter"><span style="width:${w(done)}%"></span><span class="doing" style="width:${w(doing)}%"></span></div>
+    </div>
+    ${body || '<div class="empty">No matches</div>'}
+    <form data-list="${l.id}">
+      ${l.perGroup ? `<select name="group" aria-label="Day">${l.groups.map(([g]) => `<option ${g === TODAY ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>` : ""}
+      <input name="item" placeholder="Add…" required><button>Add</button>
+    </form>
+  </section>`;
+}
+
+const pad = n => String(n).padStart(2, "0");
+const isoOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+// ---------------------------------------------------------------------------
+// Google (optional): sync everything through a file in Drive's hidden app folder. Same OAuth client as
+// GoalPlanner, so it works from http://localhost:8000 and <username>.github.io, but not from a file:// page.
+// ---------------------------------------------------------------------------
+const GOOGLE_CLIENT_ID = "732150426782-hnhcitluu47ilcadctl8slpnksihlot5.apps.googleusercontent.com";
+const G_SCOPES = { drive: "https://www.googleapis.com/auth/drive.appdata" };
+const G_AUTH_KEY = STORE_KEY + ".google";
+const DRIVE_API = "https://www.googleapis.com/drive/v3", DRIVE_UPLOAD = "https://www.googleapis.com/upload/drive/v3";
+const DRIVE_FILE = "job-switch-lists.json"; // GoalPlanner shares this app folder, so use our own file name
+const canGoogle = location.protocol.startsWith("http");
+
+let gAccount = (() => { try { return JSON.parse(localStorage.getItem(G_AUTH_KEY)); } catch { return null; } })();
+let gMessage = "", gTokenClient = null, gLoading = null, syncing = false, syncTimer = null;
+
+const gTokenValid = () => !!(gAccount && gAccount.token && gAccount.tokenExpiry - 60000 > Date.now());
+function gSaveAccount() { gAccount ? localStorage.setItem(G_AUTH_KEY, JSON.stringify(gAccount)) : localStorage.removeItem(G_AUTH_KEY); }
+function gSetMessage(m) {
+  gMessage = m;
+  // The Settings page shows the same status, so redraw it too
+  if (state.page === "settings") render(); else renderGoogle();
+}
+
+function renderGoogle() {
+  const box = document.getElementById("gbox");
+  if (!canGoogle) {
+    box.innerHTML = `<button class="pill" data-goto="settings" title="Open the page from http://localhost:8000 to sync with Google">☁️ Saved on this device</button>`;
+  } else if (!gAccount) {
+    box.innerHTML = `<button class="pill primary" data-g="main">Sign in with Google</button>`;
+  } else if (!gTokenValid()) {
+    box.innerHTML = `<button class="pill" data-g="main" style="--c:#f59e0b"><span class="dot"></span>Reconnect Google</button>`;
+  } else {
+    const ok = !gMessage || gMessage.startsWith("Synced");
+    box.innerHTML = `<button class="pill" data-g="main" title="${esc(gAccount.email || "")} · click to sync now"
+      style="--c:${syncing ? "#3b82f6" : ok ? "#16a34a" : "#dc2626"}"><span class="dot"></span>${esc(gMessage || "Synced")}</button>`;
+  }
+}
+
+function gLoad() {
+  return gLoading || (gLoading = new Promise((resolve, reject) => {
+    const s = Object.assign(document.createElement("script"), { src: "https://accounts.google.com/gsi/client", async: true });
+    s.onload = () => {
+      gTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID, scope: Object.values(G_SCOPES).join(" ") + " email",
+        callback: gOnToken, error_callback: () => gSetMessage("Google sign-in did not finish."),
+      });
+      resolve();
+    };
+    s.onerror = () => { gLoading = null; s.remove(); reject(new Error("Could not load Google sign-in.")); };
+    document.head.appendChild(s);
+  }));
+}
+
+// Must run straight from a click, or the browser blocks Google's pop-up
+function gSignIn() {
+  if (!gTokenClient) { gSetMessage("Loading Google…"); gLoad().then(() => gSetMessage("Ready, click again"), e => gSetMessage(e.message)); return; }
+  gTokenClient.requestAccessToken(gAccount?.email ? { prompt: "", login_hint: gAccount.email } : { prompt: "consent" });
+}
+
+async function gOnToken(resp) {
+  if (resp.error) return gSetMessage(`Google sign-in failed (${resp.error}).`);
+  const has = s => google.accounts.oauth2.hasGrantedAllScopes(resp, s);
+  let email = gAccount?.email || "";
+  try {
+    const r = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", { headers: { Authorization: `Bearer ${resp.access_token}` } });
+    if (r.ok) email = (await r.json()).email || email;
+  } catch {}
+  gAccount = {
+    email, token: resp.access_token, tokenExpiry: Date.now() + (Number(resp.expires_in) || 3600) * 1000,
+    granted: { drive: has(G_SCOPES.drive) }, lastSync: gAccount?.email === email ? gAccount.lastSync : null,
+  };
+  gSaveAccount();
+  render();
+  await syncNow();
+}
+
+function gSignOut() {
+  if (gAccount?.token && window.google) { try { google.accounts.oauth2.revoke(gAccount.token, () => {}); } catch {} }
+  gAccount = null;
+  gSaveAccount();
+  gMessage = "Signed out. Your data stays on this device.";
+  render();
+}
+
+async function gApi(url, { method = "GET", body, headers = {} } = {}) {
+  const res = await fetch(url, { method, body, headers: { Authorization: `Bearer ${gAccount.token}`, ...headers } });
+  if (res.status === 401) {
+    gAccount.tokenExpiry = 0; gSaveAccount();
+    throw new Error("Google session ended. Click Reconnect.");
+  }
+  if (!res.ok) {
+    let msg = `Google error (${res.status}).`;
+    try { msg = (await res.json()).error.message || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+// After each change, wait a moment so a burst of edits becomes one upload
+function scheduleSync() {
+  if (!gTokenValid()) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(syncNow, 2500);
+}
+
+// Whole-document sync: whichever copy (this browser or Drive) was changed most recently wins
+async function syncNow() {
+  if (!gAccount) return;
+  if (!gTokenValid()) return gSetMessage("Google session ended. Click Reconnect.");
+  if (!gAccount.granted.drive) return gSetMessage("Drive access wasn't granted, so nothing syncs.");
+  if (syncing) return scheduleSync();
+  syncing = true;
+  clearTimeout(syncTimer);
+  gSetMessage("Syncing…");
+  try {
+    const stamp = state.updatedAt || 0;
+    const q = encodeURIComponent(`name='${DRIVE_FILE}' and trashed=false`);
+    const found = await gApi(`${DRIVE_API}/files?spaces=appDataFolder&q=${q}&fields=files(id)&orderBy=modifiedTime desc`);
+    const fileId = found.files?.[0]?.id;
+    let remoteStamp = -1;
+    if (fileId) {
+      const remote = await gApi(`${DRIVE_API}/files/${fileId}?alt=media`);
+      remoteStamp = remote.updatedAt || 0;
+      // Take Drive's copy only if it's newer and nothing changed here while we were downloading
+      if (remoteStamp > stamp && (state.updatedAt || 0) === stamp) {
+        state = migrate(remote);
+        localStorage.setItem(STORE_KEY, JSON.stringify(state));
+        render();
+      }
+    }
+    if ((state.updatedAt || 0) > remoteStamp) await gUpload(fileId);
+    gAccount.lastSync = Date.now();
+    gSaveAccount();
+    gSetMessage(`Synced ${new Date().toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}`);
+  } catch (err) {
+    console.error(err);
+    gSetMessage(err.message || "Sync failed.");
+  } finally {
+    syncing = false;
+  }
+}
+
+async function gUpload(fileId) {
+  const content = JSON.stringify(state);
+  if (fileId) {
+    await gApi(`${DRIVE_UPLOAD}/files/${fileId}?uploadType=media`, { method: "PATCH", body: content, headers: { "Content-Type": "application/json" } });
+    return;
+  }
+  const b = "js" + Math.random().toString(36).slice(2);
+  const meta = { name: DRIVE_FILE, parents: ["appDataFolder"], mimeType: "application/json" };
+  const body = `--${b}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n--${b}\r\nContent-Type: application/json\r\n\r\n${content}\r\n--${b}--`;
+  await gApi(`${DRIVE_UPLOAD}/files?uploadType=multipart`, { method: "POST", body, headers: { "Content-Type": `multipart/related; boundary=${b}` } });
+}
+
+// ---------------------------------------------------------------------------
+// Settings page: appearance, Google account, backup / restore / delete
+// ---------------------------------------------------------------------------
+const THEME_KEY = STORE_KEY + ".theme"; // per device, not synced
+
+function applyTheme(t) {
+  if (t === "light" || t === "dark") { document.documentElement.dataset.theme = t; localStorage.setItem(THEME_KEY, t); }
+  else { delete document.documentElement.dataset.theme; localStorage.removeItem(THEME_KEY); }
+}
+
+function googleSettings() {
+  if (!canGoogle) {
+    return `<p>Google sync needs the page opened from a web address, not as a file.</p>
+      <p class="small">In the todolist folder run <code>python3 -m http.server 8000</code>, then open <b>http://localhost:8000</b>
+      (or host it on your GitHub Pages).</p>`;
+  }
+  if (!gAccount) {
+    return `<p>Sign in to keep your lists, notes and planner in sync between devices.
+      They're saved in a private app folder in your Google Drive that only this page can see.</p>
+      <div class="btn-row"><button class="btn primary" data-g="main">Sign in with Google</button></div>
+      ${gMessage ? `<p class="small">${esc(gMessage)}</p>` : ""}`;
+  }
+  const last = gAccount.lastSync ? new Date(gAccount.lastSync).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "never";
+  return `<p>Signed in as <b>${esc(gAccount.email || "your Google account")}</b></p>
+    <p class="small">${gMessage ? `${esc(gMessage)} · ` : ""}Last synced: ${esc(last)}</p>
+    ${gAccount.granted?.drive ? "" : '<p class="small">Drive access wasn\'t given, so nothing syncs. Sign in again and tick the Drive box.</p>'}
+    <div class="btn-row">
+      <button class="btn primary" data-g="main">${gTokenValid() ? "Sync now" : "Reconnect"}</button>
+      <button class="btn" data-g="out">Sign out</button>
+    </div>`;
+}
+
+function renderSettingsPage() {
+  const theme = localStorage.getItem(THEME_KEY) || "system";
+  const tracked = Object.keys(state.status).length;
+  const added = Object.values(state.extra).reduce((n, list) => n + list.length, 0);
+  const notes = Object.keys(state.notes).length;
+  const row = (title, desc, control) => `<div class="row"><div><b>${title}</b><div class="small">${desc}</div></div>${control}</div>`;
+  return `<div class="settings-wrap">
+    <section class="panel">
+      <h2>🎨 Appearance</h2>
+      <p class="small">Automatic follows your device's light / dark setting. Saved on this device only.</p>
+      <div class="seg" role="group" aria-label="Theme">
+        ${[["system", "Automatic"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) =>
+          `<button data-theme="${k}" class="${k === theme ? "on" : ""}">${l}</button>`).join("")}
+      </div>
+    </section>
+    <section class="panel">
+      <h2>☁️ Google account</h2>
+      ${googleSettings()}
+    </section>
+    <section class="panel">
+      <h2>💾 Your data</h2>
+      <p class="small">Stored in this browser: ${tracked} item statuses, ${added} items you added, ${notes} notes.
+        ${gAccount ? "Also synced to your Google Drive." : "Without Google sync, download a backup now and then."}</p>
+      ${row("Download a backup", "Saves everything as a JSON file.", '<button class="btn" data-data="export">Download</button>')}
+      ${row("Restore from a backup", "Replaces what's here with the file's contents.",
+        '<label class="btn">Choose file<input type="file" accept="application/json,.json" data-data="import" hidden></label>')}
+      ${row("Delete everything", `Clears all statuses, added items and notes${gAccount ? ", including the Google Drive copy" : ""}.`,
+        '<button class="btn danger" data-data="clear">Delete everything</button>')}
+    </section>
+  </div>`;
+}
+
+// ---------------------------------------------------------------------------
+// Toast, with Undo for changes made through undoable()
+// ---------------------------------------------------------------------------
+let toastTimer = null, toastUndo = null;
+function toast(msg, undo = null) {
+  const el = document.getElementById("toast");
+  toastUndo = undo;
+  el.innerHTML = `<span>${esc(msg)}</span>${undo ? "<button data-undo>Undo</button>" : ""}`;
+  el.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove("show"), undo ? 7000 : 3000);
+}
+document.getElementById("toast").addEventListener("click", e => {
+  if (!e.target.closest("[data-undo]") || !toastUndo) return;
+  toastUndo();
+  toastUndo = null;
+  e.currentTarget.classList.remove("show");
+});
+
+// Runs a change that can be undone from the toast: the whole state is snapshotted first
+function undoable(msg, change) {
+  const before = JSON.stringify(state);
+  change();
+  save(); render();
+  toast(msg, () => { state = migrate(JSON.parse(before)); save(); render(); });
+}
+
+function downloadBackup() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `job-switch-lists-${isoOf(new Date())}.json` });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast("Backup downloaded");
+}
+
+async function restoreBackup(file) {
+  let data;
+  try {
+    data = JSON.parse(await file.text());
+    if (!data || typeof data !== "object" || !["status", "checked", "extra", "notes"].some(k => k in data)) throw new Error();
+  } catch {
+    return toast("That file isn't a backup from this page.");
+  }
+  if (!confirm("Replace everything here with this backup? What's on this page now will be overwritten.")) return;
+  // save() inside undoable also pushes the restored copy to Google Drive when signed in
+  undoable("Backup restored", () => { state = migrate({ ...data, page: "settings" }); });
+}
+
+function deleteEverything() {
+  const drive = gAccount ? " Your Google Drive copy is cleared too." : "";
+  if (!confirm(`Delete all statuses, added items and notes?${drive} You can undo right after.`)) return;
+  undoable("Everything deleted", () => { state = migrate({ page: "settings" }); });
+}
+
+// ---------------------------------------------------------------------------
+// Rendering
+// ---------------------------------------------------------------------------
+const currentPage = () => PAGES.find(p => p.id === state.page) || PAGES[0];
+
+function renderToolbar(page) {
+  const tb = document.getElementById("toolbar");
+  if (page.render) { tb.innerHTML = ""; return; }
+  tb.innerHTML = `
+    <label class="search"><input id="search" type="search" autocomplete="off" value="${esc(query)}"
+      placeholder="${page.id === "jobs" ? "Search courses, companies, skills…" : "Search this week…"}"><kbd>/</kbd></label>
+    <div class="seg" role="group" aria-label="Show">
+      ${[["all", "All"], ["todo", "To do"], ["doing", "In progress"], ["done", "Done"]].map(([k, l]) =>
+        `<button data-filter="${k}" class="${k === statusFilter ? "on" : ""}">${l}</button>`).join("")}
+    </div>
+    ${page.id === "planner" ? '<button class="btn" data-newweek title="Clear all tasks in the weekly planner">↺ New week</button>' : ""}
+    <span class="hint">Click an item: ○ to do → ◐ in progress → ● done</span>`;
+}
+
+function render() {
+  const page = currentPage();
+  document.getElementById("tabs").innerHTML = PAGES.map(p =>
+    `<button data-page="${p.id}" class="${p.id === page.id ? "active" : ""}">${p.title}</button>`).join("");
+  renderGoogle();
+  renderToolbar(page);
+  renderApp();
+}
+
+// Redraws just the page content (the toolbar keeps focus while you type a search)
+function renderApp() {
+  const page = currentPage();
+  const scroll = [app.scrollLeft, ...[...app.children].map(c => c.scrollTop)];
+  app.className = page.render ? "page" : "board";
+  app.innerHTML = page.render ? page.render() : page.lists.map(renderList).join("") + renderNotes(page);
+  // Re-rendering replaces the columns, so put each scroll position back
+  app.scrollLeft = scroll[0];
+  [...app.children].forEach((c, i) => { c.scrollTop = scroll[i + 1] || 0; });
+  const ed = app.querySelector("[data-edit]");
+  if (ed) { ed.focus(); ed.select(); }
+}
+
+// Weekly planner columns open at today's section
+function scrollToToday() {
+  app.querySelectorAll(".card").forEach(card => {
+    const h = card.querySelector("[data-today]");
+    if (h) card.scrollTop = h.offsetTop - card.querySelector(".head").offsetHeight - 6;
+  });
+}
+
+function goTo(id) {
+  if (id === state.page) return;
+  state.page = id;
+  query = ""; statusFilter = "all"; editing = null;
+  app.innerHTML = ""; // fresh page: don't carry the other page's scroll positions over
+  app.scrollLeft = 0;
+  save(); render();
+  if (id === "planner") scrollToToday();
+}
+
+function commitEdit(input) {
+  if (!editing) return;
+  const { list, item } = editing;
+  editing = null;
+  const next = input.value.trim();
+  const arr = state.extra[list] || [], i = arr.indexOf(item);
+  if (next && next !== item && i !== -1) {
+    arr[i] = next;
+    const s = state.status[keyOf(list, item)];
+    delete state.status[keyOf(list, item)];
+    if (s) state.status[keyOf(list, next)] = s;
+    save();
+  }
+  renderApp();
+}
+
+// ---------------------------------------------------------------------------
+// Events
+// ---------------------------------------------------------------------------
+const app = document.getElementById("app");
+const toolbar = document.getElementById("toolbar");
+
+app.addEventListener("input", e => {
+  const t = e.target;
+  if (t.id !== "notes") return;
+  const id = t.dataset.section;
+  if (t.value) state.notes[id] = t.value; else delete state.notes[id];
+  app.querySelector(`[data-note="${id}"]`).classList.toggle("has", !!t.value);
+  save();
+});
+app.addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target, field = n => f.elements.namedItem(n);
+  const item = field("item").value.trim();
+  if (!item) return;
+  (state.extra[field("group") ? `${f.dataset.list}/${field("group").value}` : f.dataset.list] ||= []).push(item);
+  save(); render();
+  app.querySelector(`form[data-list="${f.dataset.list}"] input[name="item"]`)?.focus(); // keep adding
+});
+app.addEventListener("change", e => {
+  if (e.target.dataset.data === "import" && e.target.files[0]) restoreBackup(e.target.files[0]);
+});
+app.addEventListener("keydown", e => {
+  if (!("edit" in e.target.dataset)) return;
+  if (e.key === "Enter") { e.preventDefault(); commitEdit(e.target); }
+  if (e.key === "Escape") { editing = null; renderApp(); }
+});
+app.addEventListener("focusout", e => { if ("edit" in e.target.dataset) commitEdit(e.target); });
+
+app.addEventListener("click", e => {
+  const t = e.target;
+  if (t.dataset.theme) { applyTheme(t.dataset.theme); render(); return; }
+  if (t.dataset.data === "export") return downloadBackup();
+  if (t.dataset.data === "clear") return deleteEverything();
+  if (t.dataset.note) {
+    state.noteTab[state.page] = t.dataset.note;
+    save(); render();
+    document.getElementById("notes").focus();
+    return;
+  }
+  if (t.dataset.editList) { editing = { list: t.dataset.editList, item: t.dataset.editItem }; renderApp(); return; }
+  if (t.dataset.delList) {
+    const list = t.dataset.delList, item = t.dataset.del;
+    undoable(`Removed "${item.split(" | ")[0]}"`, () => {
+      state.extra[list] = state.extra[list].filter(i => i !== item);
+      delete state.status[keyOf(list, item)];
+    });
+    return;
+  }
+  const sec = t.closest("[data-sec]");
+  if (sec) {
+    if (filtering()) return; // sections stay open while searching
+    const id = sec.dataset.sec;
+    if (state.collapsed[id]) delete state.collapsed[id]; else state.collapsed[id] = true;
+    save(); renderApp();
+    return;
+  }
+  const row = t.closest(".item[data-key]");
+  if (!row) return;
+  const k = row.dataset.key, next = STATUS_NEXT[state.status[k] || "todo"];
+  if (next === "todo") delete state.status[k]; else state.status[k] = next;
+  save(); render();
+});
+
+toolbar.addEventListener("input", e => {
+  if (e.target.id === "search") { query = e.target.value.trim().toLowerCase(); renderApp(); }
+});
+toolbar.addEventListener("click", e => {
+  const f = e.target.closest("[data-filter]");
+  if (f) { statusFilter = f.dataset.filter; render(); return; }
+  if (e.target.closest("[data-newweek]")) {
+    // Clears every task (and its status) from Office, Personal, Gym and Diet
+    const inPlanner = k => PLANNER_LISTS.some(l => k.startsWith(`${l.id}/`));
+    if (!Object.keys(state.extra).some(k => inPlanner(k) && state.extra[k].length)) return toast("The weekly planner is already empty");
+    if (!confirm("Start a new week? This clears all tasks in Office, Personal, Gym and Diet. You can undo right after.")) return;
+    undoable("Weekly planner cleared for a new week", () => {
+      for (const k of Object.keys(state.extra)) if (inPlanner(k)) delete state.extra[k];
+      for (const k of Object.keys(state.status)) if (inPlanner(k)) delete state.status[k];
+    });
+  }
+});
+document.getElementById("tabs").addEventListener("click", e => {
+  const id = e.target.closest("[data-page]")?.dataset.page;
+  if (id) goTo(id);
+});
+// Google buttons live in the header and on the Settings page
+document.addEventListener("click", e => {
+  const go = e.target.closest("[data-goto]")?.dataset.goto;
+  if (go) return goTo(go);
+  const g = e.target.closest("[data-g]")?.dataset.g;
+  if (g === "out") { if (confirm("Sign out of Google? Your data stays on this device.")) gSignOut(); }
+  else if (g === "main") gTokenValid() ? syncNow() : gSignIn();
+});
+// "/" jumps to search; Esc clears it
+document.addEventListener("keydown", e => {
+  const search = document.getElementById("search");
+  if (!search) return;
+  if (e.key === "/" && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) { e.preventDefault(); search.focus(); }
+  if (e.key === "Escape" && document.activeElement === search) { search.value = ""; query = ""; search.blur(); renderApp(); }
+});
+
+render();
+if (state.page === "planner") scrollToToday();
+if (canGoogle) {
+  gLoad().catch(() => {}); // load Google's script early so the first "Sign in" click can open the pop-up
+  if (gTokenValid()) syncNow();
+  // Pick up changes made on another device when coming back to this tab
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && gTokenValid()) syncNow(); });
+}
+</script>
+</body>
+</html>
