@@ -110,6 +110,19 @@
   .btn.danger { color: #dc2626; border-color: color-mix(in srgb, #dc2626 35%, var(--border)); }
   .btn.danger:hover { background: #dc2626; color: #fff; }
 
+  /* Section switcher (Job switch page): one tab per list, plus All */
+  .sections { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sections:empty { display: none; }
+  .stab {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; cursor: pointer; white-space: nowrap; font-size: 13px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+  }
+  .stab:hover { background: var(--hover); }
+  .stab small { font-size: 11px; color: var(--muted); }
+  .stab.active { background: var(--c); border-color: var(--c); color: #fff; font-weight: 600; }
+  .stab.active small { color: rgba(255, 255, 255, .85); }
+  .stab.dim { opacity: .45; }
+
   /* Horizontal board: columns scroll vertically on their own, the board scrolls sideways */
   .board {
     flex: 1; min-height: 0; display: flex; gap: 14px; align-items: stretch;
@@ -120,6 +133,13 @@
   .board::-webkit-scrollbar-track { background: var(--border); border-radius: 6px; }
   .board::-webkit-scrollbar-thumb { background: var(--muted); border-radius: 6px; }
   .page { flex: 1; min-height: 0; overflow-y: auto; }
+  /* One list on its own: its sections flow as a masonry grid (scrolls down), notes stay on the right */
+  .split { flex: 1; min-height: 0; display: flex; gap: 14px; }
+  .split .cols { flex: 1; min-width: 0; overflow-y: auto; padding-bottom: 10px; }
+  .split .masonry { columns: 300px; column-gap: 14px; } /* inside the scroller, so columns balance instead of overflowing sideways */
+  .split .cols .card { display: block; overflow: visible; break-inside: avoid; margin-bottom: 14px; }
+  .split .cols .head { position: static; }
+  .split > .card.notes { flex: 0 0 380px; }
 
   .card {
     --track: color-mix(in srgb, var(--accent) 20%, transparent);
@@ -155,6 +175,7 @@
   @media (hover: none) { .item .acts { opacity: 1; } }
   .act { border: none; background: none; color: var(--muted); cursor: pointer; padding: 0 5px; border-radius: 4px; }
   .act:hover { color: var(--text); background: var(--hover); }
+  a.act { text-decoration: none; }
   .item.editing input { flex: 1; padding: 3px 8px; background: var(--bg); border: 1px solid var(--accent); border-radius: 6px; outline: none; }
   mark { background: color-mix(in srgb, #facc15 45%, transparent); color: inherit; border-radius: 2px; }
   .empty { color: var(--muted); font-size: 12.5px; padding: 2px 0 2px 19px; }
@@ -198,6 +219,49 @@
   .small { font-size: 12px; color: var(--muted); }
   .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 
+  /* Roadmap: summary + timeline, phase cards, priority grid */
+  .rm-wrap { max-width: 1240px; margin: 4px auto 40px; display: flex; flex-direction: column; gap: 14px; }
+  .rm-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .rm-start input { margin-left: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 3px 8px; }
+  .rm-gantt { margin: 14px 0 6px; }
+  .rm-row { display: grid; grid-template-columns: 260px 1fr; align-items: center; gap: 12px; padding: 3px 0; font-size: 12.5px; }
+  .rm-row[data-scroll] { cursor: pointer; }
+  .rm-row[data-scroll]:hover .rm-label { color: var(--text); }
+  .rm-label { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rm-track { position: relative; height: 20px; background: var(--chip); border-radius: 6px; }
+  .rm-bar {
+    position: absolute; top: 0; bottom: 0; background: var(--c); border-radius: 6px; color: #fff;
+    font-size: 11px; line-height: 20px; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .rm-now { position: absolute; top: -3px; bottom: -3px; width: 2px; background: var(--text); z-index: 1; border-radius: 1px; }
+  .rm-axis { position: relative; height: 30px; font-size: 10.5px; color: var(--muted); line-height: 1.25; }
+  .rm-axis span { position: absolute; top: 2px; white-space: nowrap; }
+  .rm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px; align-items: start; }
+  .rm-grid .card { overflow: visible; scroll-margin-top: 10px; }
+  .rm-grid .head { position: static; }
+  .rm-card.now { box-shadow: 0 0 0 2px var(--accent), var(--shadow); }
+  .rm-num {
+    display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 2px; font-size: 11px;
+    background: var(--accent); color: #fff; border-radius: 50%; vertical-align: 1px;
+  }
+  .rm-goal { margin: 6px 0 8px; font-size: 13px; }
+  .rm-refs-title { margin: 12px 0 6px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .rm-refs { display: flex; flex-wrap: wrap; gap: 5px; }
+  .rm-ref {
+    display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px 2px 3px; font-size: 12px; cursor: pointer; text-align: left;
+    background: var(--surface); border: 1px solid color-mix(in srgb, var(--c) 45%, var(--border)); border-radius: 999px;
+  }
+  .rm-ref:hover { background: color-mix(in srgb, var(--c) 12%, transparent); }
+  .rm-ref small { color: var(--muted); font-size: 11px; }
+  .rm-tab { flex: none; white-space: nowrap; font-size: 10px; font-weight: 600; color: #fff; background: var(--c); border-radius: 999px; padding: 0 6px; }
+  .rm-prio { display: grid; grid-template-columns: 130px repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .rm-ph { display: flex; flex-direction: column; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .rm-pt { font-weight: 600; padding-top: 4px; }
+  .rm-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .rm-cell .rm-tab { display: none; }
+  .rm-cell .rm-ref { padding-left: 9px; }
+  .rm-cl { display: none; }
+
   /* Toast with optional Undo */
   .toast {
     position: fixed; left: 50%; bottom: 28px; z-index: 10; transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
@@ -212,6 +276,15 @@
     .card { flex-basis: 86vw; }
     .hint { display: none; }
     .search { flex: 1 1 100%; }
+    .sections { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+    .split { flex-direction: column; overflow-y: auto; }
+    .split .cols { overflow: visible; flex: none; }
+    .split > .card.notes { flex: none; min-height: 320px; }
+    .rm-row { grid-template-columns: 1fr; gap: 2px; }
+    .rm-grid { grid-template-columns: 1fr; }
+    .rm-prio { grid-template-columns: 1fr; }
+    .rm-prio > div:first-child, .rm-ph { display: none; }
+    .rm-cl { display: block; font-weight: 600; }
   }
 </style>
 </head>
@@ -222,10 +295,14 @@
     <div class="gbox" id="gbox"></div>
   </header>
   <div class="toolbar" id="toolbar"></div>
+  <div class="sections" id="sections" aria-label="Sections"></div>
   <div class="board" id="app"></div>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- Big topic lists for the Reels and Patterns tabs live in their own files -->
+<script src="data/reels.js"></script>
+<script src="data/patterns.js"></script>
 <script>
 // Each list: title, colour, what "checked" means, and grouped items. Items are "Name" or "Name | detail".
 const LISTS = [
@@ -258,6 +335,14 @@ const LISTS = [
         "Kubernetes the Hard Way | Kelsey Hightower", "Google SRE Book | sre.google",
         "Learn Go with Tests", "DevOps Roadmap | roadmap.sh/devops, use as a checklist",
         "System Design Primer | GitHub, donnemartin", "NeetCode 150 | neetcode.io, easy + medium",
+        "Designing Data-Intensive Applications | Martin Kleppmann, the system design bible",
+        "AI Engineering | Chip Huyen book (2025), evals, RAG, agents, inference",
+        "Amazon Builders' Library | aws.amazon.com/builders-library",
+        "MIT 6.5840 Distributed Systems | lectures + Raft labs",
+        "Neural Networks: Zero to Hero | Andrej Karpathy, YouTube",
+        "Anthropic Engineering blog | agents, context engineering, evals",
+        "Hello Interview | system design write-ups",
+        "Papers We Love | github.com/papers-we-love",
       ]],
       ["Parked (after the switch)", [
         "CKS: Certified Kubernetes Security Specialist | KodeKloud",
@@ -315,9 +400,14 @@ const LISTS = [
         "\"Tell me about yourself\" 2-minute pitch", "Explain your current architecture end to end",
         "Troubleshooting scenarios | CrashLoopBackOff, DNS failure, node NotReady, high latency, TF state lock",
         "3+ mock interviews | peers / Pramp", "Questions to ask the interviewer",
+        "System design mocks | 4+, out loud, 45 minutes each",
+        "Low-level design practice | 3–4 classic problems (see Backend)",
+        "Puzzles & quick-fire quiz revision | see the Puzzles tab",
+        "2–3 papers you can discuss in depth | e.g. Dynamo, Raft, Attention (see Papers)",
+        "Company-specific prep | read their engineering blog + recent outages",
       ]],
       ["Offer", [
-        "Salary research | Levels.fyi, AmbitionBox, Glassdoor", "Expected CTC answer (₹45–50 LPA)",
+        "Salary research | Levels.fyi, AmbitionBox, Glassdoor", "Expected CTC answer",
         "Negotiate with competing offers", "Notice period / buyout plan",
       ]],
     ],
@@ -357,6 +447,8 @@ const LISTS = [
         "AI SRE agent | alert → investigate via MCP → suggest fix → Slack",
         "AI PR reviewer | GitHub Action using the Claude API on Terraform / K8s diffs",
         "Incident summariser | Slack channel + timeline → postmortem draft",
+        "Eval suite for the agent | golden set, LLM-as-judge, runs in CI and blocks bad merges",
+        "Prompt-injection red-team tests | poisoned docs / tool outputs against your agent",
       ]],
     ],
   },
@@ -365,11 +457,12 @@ const LISTS = [
     groups: [
       ["Programming & scripting", [
         "Python", "Bash", "Go basics | read/write small tools, understand operators",
-        "awk / sed / jq | text manipulation",
+        "awk / sed / jq | text manipulation", "YAML & JSON | anchors, multi-docs, yq",
       ]],
       ["OS & terminal", [
         "Linux", "Process & performance monitoring | top, vmstat, iostat, strace, lsof",
         "Networking tools | dig, curl, ss, tcpdump, traceroute", "Vim",
+        "Linux internals | boot, systemd, cgroups, namespaces", "Storage | filesystems, inodes, LVM, mounts",
       ]],
       ["Version control", ["Git", "GitHub / GitLab | PRs, branch protection, CODEOWNERS"]],
       ["Networking & protocols", ["OSI model & TCP/IP", "DNS", "HTTP / HTTPS", "SSL / TLS", "SSH", "CIDR / subnetting"]],
@@ -384,24 +477,38 @@ const LISTS = [
       ["Containers & orchestration", [
         "Docker", "Kubernetes", "Helm", "Kustomize", "Karpenter / cluster autoscaling",
         "Service mesh (Istio / Linkerd)", "Envoy", "Cilium / eBPF | basics",
+        "Docker image optimisation | multi-stage, distroless, layer caching",
+        "Kubernetes internals | API server, etcd, scheduler, controllers, kubelet",
+        "Kubernetes troubleshooting | events, describe, logs, kubectl debug",
+        "Kubernetes RBAC & Pod Security Standards", "StatefulSets, PVs & storage classes",
       ]],
       ["IaC & configuration management", [
         "Terraform", "Ansible", "CloudFormation / CDK | awareness", "Pulumi | awareness",
+        "Terraform state, modules, workspaces & drift", "Policy as code | OPA, Checkov, tfsec",
       ]],
       ["CI/CD, GitOps & artifacts", [
         "GitHub Actions", "Jenkins", "GitLab CI | awareness", "ArgoCD", "Argo Rollouts",
         "FluxCD | awareness", "Artifactory / Nexus / ECR | artifact management",
+        "DORA metrics | deploy frequency, lead time, change failure rate, MTTR",
+        "Feature flags & progressive delivery",
       ]],
       ["Secrets & security (DevSecOps)", [
         "Vault / External Secrets", "Sealed Secrets / SOPS", "Trivy", "Syft (SBOM)", "cosign", "Kyverno",
+        "SAST / dependency scanning | Semgrep, Dependabot", "Falco | runtime security",
+        "SLSA & supply-chain levels | awareness",
       ]],
       ["Observability & SRE", [
         "Prometheus", "Grafana", "OpenTelemetry", "Loki + Tempo", "Jaeger",
         "Elastic Stack (ELK / EFK) | log management", "Datadog / Splunk | awareness",
         "SLOs & error budgets", "Incident management & postmortems", "OpenCost / Kubecost",
         "Chaos engineering | Chaos Mesh / Litmus",
+        "Alertmanager & PagerDuty | routing, escalation, burn-rate alerts",
+        "Four golden signals, RED & USE methods",
       ]],
-      ["Platform engineering", ["Backstage | golden paths, software templates", "Crossplane | awareness"]],
+      ["Platform engineering", [
+        "Backstage | golden paths, software templates", "Crossplane | awareness",
+        "Internal developer platform concepts | self-service, paved roads", "FinOps basics | tagging, showback, unit cost",
+      ]],
     ],
   },
   {
@@ -412,6 +519,8 @@ const LISTS = [
         "Availability & SLAs | the nines, SLO vs SLA", "CAP & PACELC",
         "Consistency models | strong, eventual, read-your-writes",
         "Back-of-envelope estimation | QPS, storage, bandwidth",
+        "Interview framework | requirements → estimates → API → data model → high level → deep dives",
+        "Latency numbers every engineer should know", "Stateless vs stateful services",
       ]],
       ["Building blocks", [
         "Load balancers | algorithms, L4 vs L7, health checks", "DNS & CDN",
@@ -419,68 +528,179 @@ const LISTS = [
         "API gateway", "Message queues & pub/sub | Kafka, SQS",
         "Object / blob storage | S3", "Rate limiting | token bucket, leaky bucket, sliding window",
         "Consistent hashing", "Service discovery", "Search | Elasticsearch",
+        "Reverse proxy | Nginx, Envoy", "Real-time delivery | WebSockets, SSE, long polling",
+        "Uploads via pre-signed URLs",
       ]],
       ["Data at scale", [
         "SQL vs NoSQL | when to pick which", "Indexing", "Replication | leader-follower, multi-leader, quorum",
         "Sharding / partitioning | hot keys, resharding", "Denormalisation & read replicas",
+        "B-tree vs LSM-tree storage engines", "OLTP vs OLAP | data warehouses, columnar storage",
+        "Change data capture (CDC) | Debezium", "Batch vs stream processing | Spark, Flink",
+        "Time-series & vector databases",
       ]],
       ["Distributed systems", [
         "Consensus | Raft basics (etcd uses it)", "Leader election & distributed locks",
         "Idempotency", "Delivery semantics | at-most / at-least / exactly-once",
         "Distributed transactions | 2PC vs Saga", "Bloom filters", "Unique ID generation | Snowflake IDs",
+        "Quorums | R + W > N", "Gossip protocols & failure detection",
+        "Clocks | NTP skew, Lamport & vector clocks", "Outbox pattern | reliable events with DB writes",
+        "Split brain & fencing tokens",
       ]],
       ["Reliability patterns", [
         "Timeouts, retries with backoff + jitter", "Circuit breaker & bulkhead",
         "Graceful degradation & load shedding", "Multi-region active-active vs active-passive",
         "Disaster recovery | RPO / RTO, backups", "Zero-downtime deploys | blue-green, canary",
+        "Back-pressure", "Thundering herd & cache stampede | request coalescing",
+        "Cell-based architecture & shuffle sharding",
       ]],
       ["Architecture styles", [
         "Monolith vs microservices", "Event-driven architecture", "CQRS & event sourcing",
-        "Multi-tenancy | isolation models",
+        "Multi-tenancy | isolation models", "Serverless architectures",
+        "Backend for frontend (BFF)", "Strangler fig migration",
       ]],
       ["Classic questions", [
         "URL shortener", "Rate limiter", "Notification system", "Chat app (WhatsApp)", "News feed",
         "Distributed cache", "Key-value store", "Payment system", "Ride-hailing (Uber)",
         "Video streaming (YouTube)", "Web crawler",
+        "Typeahead / autocomplete", "Ticket booking (BookMyShow) | seat locking",
+        "Google Docs | collaborative editing", "Dropbox / Google Drive | file sync",
+        "Instagram | photo upload + feed", "Proximity service | Yelp, nearby drivers",
+        "Leaderboard / top-K", "Ad click aggregator", "Distributed job scheduler",
+        "Online judge (LeetCode)", "Search engine",
       ]],
       ["Infra questions (DevOps / SRE)", [
         "CI/CD for 200 microservices", "Logging pipeline for 1 TB/day", "Monitoring & alerting system",
         "Multi-region active-active setup", "Multi-tenant Kubernetes platform",
         "Zero-downtime database migration", "LLM inference platform for 10k RPS",
         "Secrets management at scale", "Deployment system | like Spinnaker / ArgoCD",
+        "Feature flag service", "Centralised config service", "Global CDN / edge caching platform",
+      ]],
+      ["AI system design", [
+        "RAG system over 10M documents | with per-user access control",
+        "Multi-tenant AI agent platform", "LLM gateway | routing, quotas, fallback, cost tracking",
+        "Semantic cache for LLM responses", "Eval pipeline for LLM features",
+        "AI customer support with human handoff",
       ]],
     ],
   },
   {
     id: "ai", title: "🤖 AI", color: "#db2777", checked: "learned",
     groups: [
+      ["ML & deep learning basics (awareness)", [
+        "Supervised vs unsupervised vs reinforcement learning", "Overfitting, regularisation & bias–variance",
+        "Gradient descent & backpropagation | intuition", "Loss functions | cross-entropy, MSE",
+        "Classification metrics | precision, recall, F1, ROC-AUC", "Train / validation / test splits",
+        "Neural network building blocks | layers, activations, softmax",
+        "CNNs, RNNs & LSTMs | high level, why transformers replaced RNNs", "Cosine similarity & dot product",
+      ]],
       ["LLM fundamentals", [
         "Tokens & context windows", "Transformers & attention | high level only",
         "Training vs fine-tuning vs inference", "Embeddings", "Quantization",
         "Sampling | temperature, top-p", "Prompt engineering",
+        "Tokenization | BPE, why models miscount letters",
+        "Self-attention | Q, K, V and softmax(QKᵀ/√d)·V", "Positional encoding | RoPE",
+        "Decoder-only vs encoder-only vs encoder-decoder | GPT vs BERT vs T5",
+        "Pre-training → SFT → RLHF / DPO", "Scaling laws | Kaplan, Chinchilla",
+        "Mixture of Experts (MoE)", "Reasoning models & test-time compute",
+        "Hallucinations | why they happen, how to reduce them", "Multimodal models | vision, audio, CLIP",
+        "Long context vs RAG | lost in the middle",
+      ]],
+      ["Prompt & context engineering", [
+        "Zero-shot vs few-shot (in-context learning)", "System vs user prompts",
+        "Chain-of-thought & extended thinking", "Prompt chaining | split a task into steps",
+        "Self-consistency | sample several, vote", "Output formatting | XML tags, JSON schema",
+        "Context engineering | what goes in the window, in what order",
+        "Context compaction & summarisation for long sessions", "Prompt templates & versioning",
       ]],
       ["Using LLM APIs", [
         "Claude API / OpenAI API", "Tool use / function calling", "Structured outputs",
         "Streaming", "Prompt caching", "Amazon Bedrock",
+        "Batch API | cheaper offline jobs", "Rate limits & retries | 429 / overloaded handling",
+        "Token counting & cost estimation", "Model selection & routing | small model first, escalate",
+        "Vision & PDF inputs", "Embedding APIs",
       ]],
       ["RAG", [
         "Chunking & embedding pipelines", "Vector DBs | pgvector, Qdrant",
         "Hybrid search & reranking", "RAG evaluation",
+        "Document parsing | PDFs, tables, OCR", "Chunking strategies | fixed, recursive, semantic, by heading",
+        "Embedding model choice | dimensions, multilingual, cost", "ANN indexes | HNSW, IVF, PQ",
+        "BM25 keyword search | why hybrid beats pure vector", "Query rewriting & HyDE",
+        "Metadata filtering & access control | ACL-aware retrieval",
+        "Incremental re-indexing | refresh docs without rebuilding the index",
+        "Background ingestion pipelines | queues, workers, idempotent upserts",
+        "Contextual retrieval | prepend chunk context before embedding",
+        "Agentic RAG | the model decides when and what to retrieve", "GraphRAG | awareness",
+        "RAG metrics | faithfulness, answer relevance, context precision / recall (RAGAS)",
       ]],
       ["Agents", [
         "Agent loop | LLM + tools + loop", "MCP | build a server", "Multi-agent patterns",
         "Claude Code / AI coding tools", "Guardrails & human-in-the-loop",
+        "Workflows vs agents | when you don't need an agent",
+        "Agent patterns | chaining, routing, parallelisation, orchestrator–workers, evaluator–optimiser",
+        "ReAct & plan-and-execute", "Single-agent vs multi-agent | trade-offs, cost, coordination",
+        "Agent memory | short-term (context) vs long-term (vector store, files)",
+        "Tool design | clear names, schemas, helpful errors",
+        "Agent frameworks | Claude Agent SDK, LangGraph, CrewAI, OpenAI Agents SDK",
+        "MCP concepts | tools, resources, prompts, stdio vs HTTP transport",
+        "A2A protocol | awareness", "Computer use & browser agents | awareness",
+        "Agent failure modes | loops, wrong tool, runaway cost, step limits",
+        "Durable execution | checkpoints, resumable long-running agents",
+      ]],
+      ["Evals", [
+        "Golden datasets | real traffic + edge cases", "Code-based graders | exact match, regex, unit tests",
+        "LLM-as-judge | rubrics, calibrate against human labels", "Pairwise comparison | A/B two prompts or models",
+        "Agent / trajectory evals | right tool, right args, right order",
+        "Regression evals in CI | block merges when scores drop",
+        "Online evals & user feedback | thumbs, edits, retries",
+        "Public benchmarks | MMLU, GPQA, SWE-bench: what they do and don't tell you",
+      ]],
+      ["AI security & guardrails", [
+        "Prompt injection | direct vs indirect (web pages, emails, docs, tool output)",
+        "OWASP Top 10 for LLM applications", "Least-privilege tools | read-only by default, scoped credentials",
+        "Data exfiltration via tools & links", "Input / output guardrails | classifiers, Llama Guard, NeMo Guardrails",
+        "Sandboxing code execution | containers, gVisor, Firecracker", "Red-teaming & jailbreak testing",
+      ]],
+      ["Fine-tuning", [
+        "When to fine-tune vs RAG vs prompting", "Supervised fine-tuning (SFT) | data format, quality over quantity",
+        "LoRA & QLoRA | parameter-efficient fine-tuning", "Preference tuning | RLHF, DPO basics",
+        "Distillation | a big model teaches a small one", "Synthetic data generation",
+        "Memory math | params × bytes, why a 7B model needs ~14 GB in FP16",
+        "Tooling | Hugging Face Transformers, PEFT, Unsloth, Bedrock fine-tuning",
       ]],
       ["Model serving & AI infra", [
         "Ollama", "vLLM / KServe", "GPU basics | memory, CUDA, NVIDIA GPU Operator",
         "Batching & KV cache", "KEDA | autoscale inference", "LiteLLM | AI gateway",
         "Triton Inference Server | awareness",
+        "Inference metrics | TTFT, inter-token latency, tokens/sec, goodput",
+        "Prefill vs decode | compute-bound vs memory-bound", "Continuous batching",
+        "PagedAttention | how vLLM manages the KV cache", "Speculative decoding", "FlashAttention | awareness",
+        "Tensor / pipeline / data parallelism", "Quantization formats | FP8, INT4, GGUF, AWQ, GPTQ",
+        "GPU sizing | VRAM for a 70B model, H100 vs A100 vs L4", "SGLang / TensorRT-LLM | awareness",
+        "Semantic caching | cache by meaning, not exact text",
+      ]],
+      ["Production AI apps", [
+        "Serve the agent behind a secure API | FastAPI, auth, per-user quotas",
+        "Long tasks on background workers | queue + status polling / webhooks",
+        "Stream responses to the UI | SSE", "Caching, rate limiting & async execution",
+        "Tracing across agent steps and MCP calls", "Monitor errors, token usage & user feedback",
+        "Alerts for provider outages & latency spikes", "Timeouts, retries & model fallback",
+        "Containerise + CI/CD with evals as a gate", "Cost vs latency vs quality trade-offs",
+        "Production-readiness review | failure modes, security, reliability",
       ]],
       ["LLMOps", [
         "Tracing | Langfuse, OTel GenAI", "Evals", "Prompt versioning",
         "Token cost tracking", "PII handling & safety",
       ]],
-      ["MLOps (awareness)", ["MLflow", "Kubeflow", "Feature stores"]],
+      ["MLOps (awareness)", ["MLflow", "Kubeflow", "Feature stores", "Model registry & versioning", "Data & model drift monitoring"]],
+      ["AI interview questions", [
+        "How does an LLM generate the next token? | tokenize → embed → attention → logits → sample",
+        "Why isn't temperature 0 fully deterministic?", "Explain RAG end to end and where it fails",
+        "How would you evaluate a RAG system or an agent?", "Fine-tuning vs RAG: when each?",
+        "Cut LLM cost by 50% | caching, routing, batching, shorter prompts",
+        "Why is my LLM endpoint slow? | TTFT vs decode, batching, KV cache",
+        "Defend an email agent against prompt injection", "Self-host an open model vs use an API: how to decide?",
+        "Design a code-review agent for 1,000 PRs a day",
+      ]],
     ],
   },
   {
@@ -489,49 +709,664 @@ const LISTS = [
       ["APIs", [
         "REST design | status codes, versioning, pagination", "gRPC & protobuf",
         "WebSockets / SSE", "GraphQL | awareness", "Idempotency keys",
+        "Pagination | offset vs cursor", "HTTP caching | ETag, Cache-Control", "API rate limiting & quotas",
       ]],
       ["Auth & security", [
         "OAuth2 / OIDC", "JWT vs sessions", "mTLS", "CORS", "OWASP Top 10",
+        "Password hashing | bcrypt, argon2", "RBAC vs ABAC", "API keys & HMAC request signing",
+        "SSO & SAML | awareness",
       ]],
       ["Databases", [
         "SQL | joins, group by, window functions", "Indexes & EXPLAIN",
         "Transactions & isolation levels", "Connection pooling | PgBouncer",
         "PostgreSQL operations | backups, replication, failover", "Redis | data types, persistence, eviction",
         "DynamoDB / MongoDB basics",
+        "MVCC | how Postgres handles concurrent reads and writes", "Optimistic vs pessimistic locking",
+        "N+1 queries", "Zero-downtime schema migrations | expand → migrate → contract",
       ]],
       ["Messaging", [
         "Kafka | topics, partitions, consumer groups", "RabbitMQ / SQS", "Dead-letter queues & retries",
+        "Ordering & partition keys", "Idempotent consumers & deduplication", "Transactional outbox pattern",
       ]],
       ["Concurrency", [
         "Processes vs threads", "async / await | Python asyncio", "Locks & race conditions", "Python GIL",
+        "Deadlocks | causes and prevention", "Thread pools & worker pools", "Go goroutines & channels",
       ]],
       ["Building services", [
         "FastAPI", "Testing | pytest, mocks", "12-factor app", "Structured logging",
         "Config & feature flags", "Profiling & performance",
+        "Background jobs | Celery, RQ, cron", "Graceful shutdown | SIGTERM, draining",
+        "Health checks | liveness vs readiness", "In-app caching strategies",
+      ]],
+      ["Low-level design (LLD)", [
+        "OOP principles | encapsulation, inheritance, polymorphism", "SOLID principles",
+        "Design patterns | singleton, factory, builder, strategy, observer, adapter, decorator",
+        "Composition over inheritance & dependency injection", "UML class diagrams | awareness",
+        "LLD: Parking lot", "LLD: Elevator system", "LLD: Splitwise", "LLD: BookMyShow",
+        "LLD: LRU cache", "LLD: Rate limiter", "LLD: Logger / pub-sub", "LLD: Vending machine",
       ]],
     ],
   },
   {
     id: "dsa", title: "🧮 DSA", color: "#dc2626", checked: "practised",
     groups: [
-      ["Basics", ["Big-O | time & space", "Arrays", "Strings", "Hash maps & sets"]],
+      ["Basics", [
+        "Big-O | time & space", "Arrays", "Strings", "Hash maps & sets",
+        "Amortized complexity | why list append is O(1)", "Recursion & the call stack",
+      ]],
       ["Patterns", [
         "Two pointers", "Sliding window", "Prefix sums", "Binary search", "Sorting",
         "Stack | valid parentheses, monotonic stack", "Queue / deque", "Linked lists",
         "Recursion & backtracking basics", "Intervals | merge intervals",
+        "Fast & slow pointers | cycle, middle", "Kadane | max subarray", "Matrix traversal | spiral, rotate",
+        "Monotonic deque | sliding window max", "Two heaps | running median", "K-way merge",
+        "Greedy", "Bit manipulation | XOR tricks",
       ]],
       ["Trees & graphs", [
         "Binary tree traversals", "Binary search tree", "BFS / DFS", "Heaps / top-K",
         "Topological sort | dependency ordering", "Union-find | awareness",
+        "Lowest common ancestor", "Grid BFS / DFS | islands, rotting oranges", "Cycle detection",
+        "Shortest paths | Dijkstra",
       ]],
       ["Stretch (Tier 0)", ["Dynamic programming basics", "Tries"]],
+      ["Dynamic programming patterns", [
+        "1D DP | climbing stairs, house robber", "2D / grid DP | unique paths, min path sum",
+        "0/1 knapsack | subset sum, partition equal subset", "Unbounded knapsack | coin change",
+        "LIS / LCS | subsequences", "Edit distance", "Stock buy & sell | state machine DP",
+        "Interval DP | burst balloons (stretch)",
+      ]],
+      ["Must-do problems", [
+        "Two Sum", "Best Time to Buy and Sell Stock", "Product of Array Except Self",
+        "Longest Substring Without Repeating Characters", "Group Anagrams", "Top K Frequent Elements",
+        "3Sum", "Container With Most Water", "Merge Intervals", "Search in Rotated Sorted Array",
+        "Reverse Linked List", "Merge K Sorted Lists", "Number of Islands", "Course Schedule",
+        "Clone Graph", "Validate BST", "Kth Smallest in a BST", "Word Search", "Coin Change",
+        "Longest Increasing Subsequence", "Minimum Window Substring", "Trapping Rain Water",
+        "Find Median from Data Stream", "Serialize and Deserialize Binary Tree",
+      ]],
       ["Practical coding rounds", [
         "Parse a log file, find top IPs / error counts", "Call an API, aggregate JSON",
         "Implement an LRU cache", "Implement a rate limiter", "Walk a directory tree, find large / duplicate files",
+        "Retry-with-backoff decorator", "Thread-safe worker pool", "tail -f style log follower",
+        "In-memory key-value store with TTL", "Parse and validate a YAML / JSON config",
+      ]],
+      ["Interview strategy", [
+        "Clarify → brute force → optimise → code → test", "Use constraints as hints | n ≤ 20 bitmask, n ≤ 10⁵ needs n log n",
+        "Dry-run with an example + edge cases", "Think out loud, state trade-offs",
+        "Timed practice | 2 mediums in 45 minutes",
+      ]],
+    ],
+  },
+  {
+    id: "algorithms", title: "🧠 Algorithms", color: "#65a30d", checked: "learned",
+    groups: [
+      ["Sorting", [
+        "Bubble, selection & insertion sort | O(n²), when insertion sort wins",
+        "Merge sort | stable, O(n log n), external sorting", "Quick sort | partitioning, pivot choice, worst case",
+        "Heap sort", "Counting, radix & bucket sort | beating n log n", "Timsort | what Python and Java use",
+        "Quickselect | k-th element in O(n) average",
+      ]],
+      ["Searching", [
+        "Binary search & lower / upper bound", "Binary search on the answer",
+        "Exponential search | unbounded input", "Ternary search | awareness",
+      ]],
+      ["Graph algorithms", [
+        "BFS & DFS", "Topological sort | Kahn's & DFS", "Dijkstra | with a min-heap",
+        "Bellman-Ford | negative edges", "Floyd-Warshall | all pairs", "A* search | heuristics",
+        "Minimum spanning tree | Kruskal & Prim", "Union-Find | path compression, union by rank",
+        "Strongly connected components | Tarjan, Kosaraju", "Bridges & articulation points",
+        "Bipartite check | 2-colouring", "Max flow | Ford-Fulkerson awareness",
+      ]],
+      ["Greedy", [
+        "Activity selection / interval scheduling", "Huffman coding", "Fractional knapsack",
+        "Jump game & gas station", "Exchange argument | proving greedy correct",
+      ]],
+      ["Dynamic programming", [
+        "Memoisation vs tabulation", "Knapsack family", "LCS & edit distance",
+        "LIS in O(n log n) | patience sorting", "Interval DP | matrix chain", "DP on trees",
+        "Bitmask DP | travelling salesman awareness", "Space optimisation | rolling arrays",
+      ]],
+      ["Strings", [
+        "KMP", "Rabin-Karp | rolling hash", "Z-algorithm", "Manacher | longest palindrome",
+        "Trie & Aho-Corasick | awareness", "Suffix array | awareness",
+      ]],
+      ["Math & bits", [
+        "GCD / LCM | Euclid", "Sieve of Eratosthenes", "Fast exponentiation & modular arithmetic",
+        "nCr & Pascal's triangle", "Bit tricks | n & (n-1), XOR, masks",
+        "Fisher-Yates shuffle", "Reservoir sampling | random pick from a stream",
+      ]],
+      ["Advanced data structures", [
+        "Segment tree | lazy propagation", "Fenwick tree (BIT)", "Sparse table",
+        "Skip list | Redis sorted sets", "B-tree / B+ tree | database indexes",
+        "LSM tree | write-optimised storage", "Self-balancing BSTs | AVL, red-black awareness",
+      ]],
+      ["Algorithms in real systems", [
+        "Consistent hashing & rendezvous hashing", "LRU / LFU cache", "Bloom filter",
+        "Count-min sketch | heavy hitters", "HyperLogLog | count distinct",
+        "Merkle trees | anti-entropy, Git", "Token bucket / leaky bucket / sliding window log",
+        "Geohash / quadtree | nearby search", "Raft | leader election & log replication",
+        "Vector clocks | ordering events", "Exponential backoff with jitter",
+        "Load-balancing algorithms | round robin, least connections, power of two choices",
+        "Myers diff algorithm | awareness",
+      ]],
+    ],
+  },
+  {
+    id: "networking", title: "🌐 Networking", color: "#0891b2", checked: "learned",
+    groups: [
+      ["Fundamentals", [
+        "OSI vs TCP/IP model | which layer does what", "IPv4 vs IPv6", "Subnetting & CIDR | usable hosts in a /26",
+        "Public vs private IPs & NAT", "Ports & sockets", "MAC addresses & ARP",
+        "Switch vs router vs gateway", "VLANs | awareness",
+      ]],
+      ["The URL journey", [
+        "What happens when you type a URL | the classic question",
+        "DNS lookup → TCP → TLS → HTTP → render | walk it end to end",
+      ]],
+      ["DNS", [
+        "Recursive vs iterative resolution | root, TLD, authoritative",
+        "Record types | A, AAAA, CNAME, MX, TXT, NS, SRV, PTR", "TTL & caching | why changes take time",
+        "GeoDNS & DNS load balancing", "DNS over UDP vs TCP | when TCP kicks in", "DNSSEC & DoH | awareness",
+      ]],
+      ["TCP & UDP", [
+        "TCP vs UDP | when to use which", "3-way handshake & 4-way teardown",
+        "ACKs, sequence numbers & retransmission", "Flow control | sliding window",
+        "Congestion control | slow start, CUBIC, BBR", "Head-of-line blocking",
+        "TIME_WAIT & ephemeral port exhaustion", "MTU, MSS & fragmentation",
+        "Nagle's algorithm & delayed ACK | awareness",
+      ]],
+      ["HTTP", [
+        "Methods, status codes & headers", "HTTP/1.1 keep-alive", "HTTP/2 multiplexing",
+        "HTTP/3 & QUIC", "Caching headers | Cache-Control, ETag", "Cookies & sessions",
+        "CORS & preflight requests", "WebSockets, SSE & long polling",
+      ]],
+      ["TLS & HTTPS", [
+        "Symmetric vs asymmetric encryption", "Certificates, CAs & chain of trust", "TLS 1.3 handshake",
+        "TLS termination | at the LB vs the app", "mTLS", "SNI & ALPN",
+        "Certificate rotation | Let's Encrypt, cert-manager",
+      ]],
+      ["Load balancing & proxies", [
+        "Forward vs reverse proxy", "L4 vs L7 load balancing",
+        "LB algorithms | round robin, least connections, hashing",
+        "Reverse proxy vs load balancer vs API gateway", "Health checks & connection draining",
+        "Sticky sessions", "Anycast & global load balancing",
+      ]],
+      ["Network security", [
+        "Firewalls | stateful vs stateless", "DDoS attacks & mitigation", "VPNs | IPsec, WireGuard",
+        "Bastion hosts vs SSM Session Manager", "Zero trust networking",
+      ]],
+      ["Container & Kubernetes networking", [
+        "Docker bridge, host & overlay networks", "Pod networking & CNI | Calico, Cilium",
+        "Services | ClusterIP, NodePort, LoadBalancer", "kube-proxy | iptables vs IPVS vs eBPF",
+        "CoreDNS & ndots:5", "Ingress vs Gateway API", "NetworkPolicies",
+        "Service mesh traffic | sidecar vs ambient",
+      ]],
+      ["Internet & performance", [
+        "Latency, bandwidth, RTT & bandwidth-delay product", "BGP basics | how networks find each other",
+        "CDNs & edge caching", "Connection pooling & reuse",
+      ]],
+      ["Troubleshooting tools", [
+        "ping & traceroute | ICMP, TTL", "dig / nslookup", "curl -v & openssl s_client",
+        "ss / netstat", "tcpdump & Wireshark", "mtr & iperf3",
+      ]],
+      ["Interview scenarios", [
+        "The site is slow: where do you start?", "Service can't reach the database | SG, routes, DNS, port",
+        "Intermittent 502s behind a load balancer", "DNS change isn't taking effect",
+        "TLS handshake failure | expired cert, SNI, missing chain", "Pod can't resolve a Service name",
+      ]],
+    ],
+  },
+  {
+    id: "aws", title: "☁️ AWS", color: "#b45309", checked: "learned",
+    groups: [
+      ["Foundations", [
+        "Regions, AZs & edge locations", "Shared responsibility model",
+        "Well-Architected Framework | the 6 pillars", "Pricing models & free-tier traps",
+      ]],
+      ["IAM", [
+        "Users, groups, roles & policies", "Policy evaluation | explicit deny wins",
+        "AssumeRole & STS | temporary credentials", "Resource-based policies & cross-account access",
+        "Least privilege & IAM Access Analyzer", "Permission boundaries & SCPs",
+        "IAM Identity Center (SSO)", "IRSA / EKS Pod Identity",
+      ]],
+      ["VPC", [
+        "VPC & CIDR planning", "Public vs private subnets", "Route tables & Internet Gateway",
+        "NAT Gateway | and its bill", "Security groups vs NACLs", "VPC peering vs Transit Gateway",
+        "VPC endpoints & PrivateLink", "VPC Flow Logs", "Site-to-Site VPN & Direct Connect",
+      ]],
+      ["Compute & load balancing", [
+        "EC2 instance families", "AMIs & launch templates", "EBS vs instance store | gp3, io2",
+        "On-demand, Reserved, Spot & Savings Plans", "Auto Scaling groups & scaling policies",
+        "User data & IMDSv2", "ALB vs NLB vs GWLB", "Target groups, health checks & cross-zone LB",
+        "Graviton | ARM instances, price-performance",
+      ]],
+      ["Storage", [
+        "S3 basics | buckets, keys, strong consistency", "S3 storage classes & lifecycle rules",
+        "Versioning, replication & Object Lock", "Bucket policies & Block Public Access",
+        "Pre-signed URLs", "S3 event notifications", "Multipart upload & performance",
+        "S3 vs EBS vs EFS | when each", "AWS Backup",
+      ]],
+      ["Serverless", [
+        "Lambda execution model & cold starts", "Provisioned vs reserved concurrency",
+        "Invocation types | sync, async, event source mapping", "Lambda destinations & DLQs",
+        "Lambda in a VPC", "Lambda limits | 15 min, payload size, /tmp",
+        "API Gateway | REST vs HTTP vs WebSocket", "API Gateway authorizers & throttling",
+        "Step Functions | Standard vs Express, retries, saga",
+      ]],
+      ["Databases", [
+        "DynamoDB keys | partition & sort key", "GSI vs LSI", "Capacity modes & hot partitions",
+        "Single-table design", "DynamoDB Streams, TTL & transactions",
+        "RDS Multi-AZ vs read replicas", "Aurora architecture | 6 copies across 3 AZs",
+        "RDS Proxy | Lambda connection storms", "Backups, snapshots & PITR", "ElastiCache | Redis / Valkey",
+      ]],
+      ["Messaging & events", [
+        "SQS standard vs FIFO", "Visibility timeout & DLQ", "SNS fan-out",
+        "EventBridge | rules, buses, scheduler", "Kinesis Data Streams | shards", "MSK | managed Kafka",
+        "SQS vs SNS vs EventBridge vs Kinesis | choosing",
+      ]],
+      ["Containers", [
+        "ECR", "ECS tasks & services", "Fargate", "EKS | managed node groups, add-ons",
+        "ECS vs EKS vs Lambda | decision guide", "AWS Load Balancer Controller & Karpenter on EKS",
+      ]],
+      ["Edge & DNS", [
+        "CloudFront | origins, behaviours, OAC", "CloudFront signed URLs & cookies",
+        "Route 53 | alias vs CNAME", "Routing policies | latency, weighted, geo, failover",
+        "Route 53 health checks & DNS failover", "Global Accelerator | awareness",
+      ]],
+      ["Security", [
+        "KMS & envelope encryption", "Secrets Manager vs Parameter Store", "ACM certificates",
+        "WAF & Shield", "GuardDuty, Security Hub & Inspector", "Cognito", "Macie | awareness",
+      ]],
+      ["Observability & governance", [
+        "CloudWatch metrics, alarms & dashboards", "CloudWatch Logs Insights", "X-Ray / ADOT tracing",
+        "CloudTrail", "AWS Config & conformance packs",
+        "Organizations, Control Tower & multi-account strategy", "Tagging, Cost Explorer & Budgets",
+      ]],
+      ["IaC on AWS", ["CloudFormation | stacks, change sets, drift", "AWS CDK", "AWS SAM"]],
+      ["Architecture & cost", [
+        "Three-tier web app | ALB + ECS + RDS", "Serverless reference | API Gateway + Lambda + DynamoDB",
+        "DR strategies | backup/restore, pilot light, warm standby, multi-site",
+        "Multi-region active-active | Route 53 + DynamoDB global tables / Aurora Global",
+        "Cost optimisation | rightsizing, Spot, Graviton, S3 tiering, NAT costs",
+        "Static stability & cell-based architecture",
+      ]],
+      ["AI on AWS", [
+        "Amazon Bedrock | models, Knowledge Bases, Agents, Guardrails",
+        "SageMaker | awareness", "GPU inference on EKS | awareness",
+      ]],
+      ["Interview scenarios", [
+        "Private EC2 can't reach the internet", "S3 Access Denied: how do you debug it?",
+        "Lambda times out connecting to RDS", "Give another account read access to a bucket",
+        "Cut the AWS bill by 30%", "Design a highly available 3-tier app across AZs",
+        "Rotate DB credentials without downtime", "Someone deleted prod: find who and recover",
+      ]],
+    ],
+  },
+  {
+    id: "papers", title: "📄 Papers", color: "#475569", checked: "read", links: true,
+    groups: [
+      ["Distributed systems foundations", [
+        "Time, Clocks, and the Ordering of Events in a Distributed System | Lamport · 1978",
+        "The Byzantine Generals Problem | Lamport, Shostak, Pease · 1982",
+        "Impossibility of Distributed Consensus with One Faulty Process (FLP) | Fischer, Lynch, Paterson · 1985",
+        "Linearizability: A Correctness Condition for Concurrent Objects | Herlihy & Wing · 1990",
+        "A Note on Distributed Computing | Waldo et al. · 1994",
+        "Fallacies of Distributed Computing | Peter Deutsch · 1994",
+        "Harvest, Yield, and Scalable Tolerant Systems | Fox & Brewer · 1999",
+        "Brewer's Conjecture and the Feasibility of Consistent, Available, Partition-Tolerant Web Services | Gilbert & Lynch · 2002",
+        "CAP Twelve Years Later: How the \"Rules\" Have Changed | Brewer · 2012",
+        "Paxos Made Simple | Lamport · 2001",
+        "In Search of an Understandable Consensus Algorithm (Raft) | Ongaro & Ousterhout · 2014",
+        "Chain Replication for Supporting High Throughput and Availability | van Renesse & Schneider · 2004",
+        "Conflict-free Replicated Data Types (CRDTs) | Shapiro et al. · 2011",
+        "Consistent Hashing and Random Trees | Karger et al. · 1997",
+      ]],
+      ["Google, Meta & big-tech systems", [
+        "The Google File System | Ghemawat, Gobioff, Leung · 2003",
+        "MapReduce: Simplified Data Processing on Large Clusters | Dean & Ghemawat · 2004",
+        "Bigtable: A Distributed Storage System for Structured Data | Chang et al. · 2006",
+        "The Chubby Lock Service for Loosely-Coupled Distributed Systems | Burrows · 2006",
+        "Spanner: Google's Globally-Distributed Database | Corbett et al. · 2012",
+        "Large-scale Incremental Processing Using Distributed Transactions and Notifications (Percolator) | Peng & Dabek · 2010",
+        "ZooKeeper: Wait-free Coordination for Internet-scale Systems | Hunt et al. · 2010",
+        "Cassandra: A Decentralized Structured Storage System | Lakshman & Malik · 2009",
+        "Scaling Memcache at Facebook | Nishtala et al. · 2013",
+        "TAO: Facebook's Distributed Data Store for the Social Graph | Bronson et al. · 2013",
+        "Finding a Needle in Haystack: Facebook's Photo Storage | Beaver et al. · 2010",
+        "Zanzibar: Google's Consistent, Global Authorization System | Pang et al. · 2019",
+        "Maglev: A Fast and Reliable Software Network Load Balancer | Eisenbud et al. · 2016",
+      ]],
+      ["AWS papers & Builders' Library", [
+        "Dynamo: Amazon's Highly Available Key-value Store | DeCandia et al. · 2007",
+        "Amazon DynamoDB: A Scalable, Predictably Performant, and Fully Managed NoSQL Database Service | Elhemali et al. · 2022",
+        "Amazon Aurora: Design Considerations for High Throughput Cloud-Native Relational Databases | Verbitski et al. · 2017",
+        "Amazon Aurora: On Avoiding Distributed Consensus for I/Os, Commits, and Membership Changes | Verbitski et al. · 2018",
+        "Firecracker: Lightweight Virtualization for Serverless Applications | Agache et al. · 2020",
+        "On-demand Container Loading in AWS Lambda | Brooker et al. · 2023",
+        "Millions of Tiny Databases (Physalia) | Brooker, Chen, Ping · 2020",
+        "Using Lightweight Formal Methods to Validate a Key-Value Storage Node in Amazon S3 | Bornholt et al. · 2021",
+        "How Amazon Web Services Uses Formal Methods | Newcombe et al. · 2015",
+        "Amazon MemoryDB: A Fast and Durable Memory-First Cloud Database | AWS · 2024",
+        "Timeouts, retries, and backoff with jitter | Builders' Library, Marc Brooker",
+        "Static stability using Availability Zones | Builders' Library",
+        "Workload isolation using shuffle-sharding | Builders' Library",
+        "Avoiding insurmountable queue backlogs | Builders' Library",
+        "Using load shedding to avoid overload | Builders' Library",
+        "Avoiding fallback in distributed systems | Builders' Library",
+      ]],
+      ["Databases & storage", [
+        "A Relational Model of Data for Large Shared Data Banks | Codd · 1970",
+        "Organization and Maintenance of Large Ordered Indices (B-trees) | Bayer & McCreight · 1972",
+        "The Log-Structured Merge-Tree (LSM-Tree) | O'Neil et al. · 1996",
+        "A Critique of ANSI SQL Isolation Levels | Berenson et al. · 1995",
+        "Architecture of a Database System | Hellerstein, Stonebraker, Hamilton · 2007",
+        "What Goes Around Comes Around | Stonebraker & Hellerstein · 2005",
+        "What Goes Around Comes Around... And Around | Stonebraker & Pavlo · 2024",
+        "Life Beyond Distributed Transactions | Pat Helland · 2007",
+        "Sagas | Garcia-Molina & Salem · 1987",
+        "Gorilla: A Fast, Scalable, In-Memory Time Series Database | Pelkonen et al. · 2015",
+      ]],
+      ["Streaming & data processing", [
+        "Kafka: a Distributed Messaging System for Log Processing | Kreps, Narkhede, Rao · 2011",
+        "The Log: What every software engineer should know about real-time data | Jay Kreps · 2013",
+        "Resilient Distributed Datasets (Spark) | Zaharia et al. · 2012",
+        "MillWheel: Fault-Tolerant Stream Processing at Internet Scale | Akidau et al. · 2013",
+        "The Dataflow Model | Akidau et al. · 2015",
+      ]],
+      ["DevOps, SRE & cloud infra", [
+        "Large-scale Cluster Management at Google with Borg | Verma et al. · 2015",
+        "Omega: Flexible, Scalable Schedulers for Large Compute Clusters | Schwarzkopf et al. · 2013",
+        "Borg, Omega, and Kubernetes | Burns et al. · 2016",
+        "Twine: A Unified Cluster Management System for Shared Infrastructure | Tang et al. · 2020",
+        "Dapper: a Large-Scale Distributed Systems Tracing Infrastructure | Sigelman et al. · 2010",
+        "Monarch: Google's Planet-Scale In-Memory Time Series Database | Adams et al. · 2020",
+        "The Tail at Scale | Dean & Barroso · 2013",
+        "On Designing and Deploying Internet-Scale Services | James Hamilton · 2007",
+        "Holistic Configuration Management at Facebook | Tang et al. · 2015",
+        "Simple Testing Can Prevent Most Critical Failures | Yuan et al. · 2014",
+        "Gray Failure: The Achilles' Heel of Cloud-Scale Systems | Huang et al. · 2017",
+        "Metastable Failures in Distributed Systems | Bronson et al. · 2021",
+        "Why Does the Cloud Stop Computing? Lessons from Hundreds of Service Outages | Gunawi et al. · 2016",
+        "Chaos Engineering | Basiri et al. (Netflix) · 2016",
+        "Canary Analysis Service | Davidovič & Beyer (Google) · 2018",
+        "Postmortem Culture: Learning from Failure | Google SRE book",
+        "State of DevOps report | DORA, the four key metrics",
+        "The Twelve-Factor App | Adam Wiggins · 2011",
+      ]],
+      ["Networking & protocols", [
+        "A Protocol for Packet Network Intercommunication | Cerf & Kahn · 1974",
+        "End-to-End Arguments in System Design | Saltzer, Reed, Clark · 1984",
+        "The Design Philosophy of the DARPA Internet Protocols | David Clark · 1988",
+        "Congestion Avoidance and Control | Van Jacobson · 1988",
+        "BBR: Congestion-Based Congestion Control | Cardwell et al. · 2016",
+        "The QUIC Transport Protocol: Design and Internet-Scale Deployment | Langley et al. · 2017",
+        "B4: Experience with a Globally-Deployed Software Defined WAN | Jain et al. · 2013",
+        "Jupiter Rising: A Decade of Clos Topologies in Google's Datacenter Network | Singh et al. · 2015",
+        "RFC 1034 / 1035 | DNS", "RFC 9293 | TCP (replaces RFC 793)", "RFC 9110 | HTTP semantics",
+        "RFC 8446 | TLS 1.3", "RFC 9000 | QUIC",
+      ]],
+      ["Security", [
+        "New Directions in Cryptography | Diffie & Hellman · 1976",
+        "A Method for Obtaining Digital Signatures and Public-Key Cryptosystems (RSA) | Rivest, Shamir, Adleman · 1978",
+        "Reflections on Trusting Trust | Ken Thompson · 1984",
+        "BeyondCorp: A New Approach to Enterprise Security | Ward & Beyer · 2014",
+      ]],
+      ["Software design classics", [
+        "Go To Statement Considered Harmful | Dijkstra · 1968",
+        "On the Criteria To Be Used in Decomposing Systems into Modules | Parnas · 1972",
+        "Hints for Computer System Design | Butler Lampson · 1983",
+        "No Silver Bullet | Fred Brooks · 1986",
+        "Out of the Tar Pit | Moseley & Marks · 2006",
+      ]],
+      ["Algorithms classics", [
+        "A Note on Two Problems in Connexion with Graphs (Dijkstra's algorithm) | Dijkstra · 1959",
+        "Quicksort | C. A. R. Hoare · 1962",
+        "Space/Time Trade-offs in Hash Coding with Allowable Errors (Bloom filter) | Bloom · 1970",
+        "Depth-First Search and Linear Graph Algorithms | Tarjan · 1972",
+        "Fast Pattern Matching in Strings (KMP) | Knuth, Morris, Pratt · 1977",
+        "Random Sampling with a Reservoir | Vitter · 1985",
+        "Skip Lists: A Probabilistic Alternative to Balanced Trees | Pugh · 1990",
+        "The Anatomy of a Large-Scale Hypertextual Web Search Engine (PageRank) | Brin & Page · 1998",
+        "Cuckoo Hashing | Pagh & Rodler · 2004",
+        "An Improved Data Stream Summary: The Count-Min Sketch | Cormode & Muthukrishnan · 2005",
+        "HyperLogLog: the analysis of a near-optimal cardinality estimation algorithm | Flajolet et al. · 2007",
+      ]],
+      ["AI · Ilya Sutskever's 27", [
+        "The Annotated Transformer | Rush (Harvard NLP) · 2018",
+        "The First Law of Complexodynamics | Scott Aaronson (blog) · 2011",
+        "The Unreasonable Effectiveness of Recurrent Neural Networks | Karpathy (blog) · 2015",
+        "Understanding LSTM Networks | Chris Olah (blog) · 2015",
+        "Recurrent Neural Network Regularization | Zaremba, Sutskever, Vinyals · 2014",
+        "Keeping Neural Networks Simple by Minimizing the Description Length of the Weights | Hinton & van Camp · 1993",
+        "Pointer Networks | Vinyals, Fortunato, Jaitly · 2015",
+        "ImageNet Classification with Deep Convolutional Neural Networks (AlexNet) | Krizhevsky, Sutskever, Hinton · 2012",
+        "Order Matters: Sequence to Sequence for Sets | Vinyals, Bengio, Kudlur · 2015",
+        "GPipe: Easy Scaling with Micro-Batch Pipeline Parallelism | Huang et al. · 2018",
+        "Deep Residual Learning for Image Recognition (ResNet) | He et al. · 2015",
+        "Multi-Scale Context Aggregation by Dilated Convolutions | Yu & Koltun · 2015",
+        "Neural Message Passing for Quantum Chemistry | Gilmer et al. · 2017",
+        "Attention Is All You Need | Vaswani et al. · 2017",
+        "Neural Machine Translation by Jointly Learning to Align and Translate | Bahdanau, Cho, Bengio · 2014",
+        "Identity Mappings in Deep Residual Networks | He et al. · 2016",
+        "A Simple Neural Network Module for Relational Reasoning | Santoro et al. · 2017",
+        "Variational Lossy Autoencoder | Chen et al. · 2016",
+        "Relational Recurrent Neural Networks | Santoro et al. · 2018",
+        "Quantifying the Rise and Fall of Complexity in Closed Systems: The Coffee Automaton | Aaronson, Carroll, Ouellette · 2014",
+        "Neural Turing Machines | Graves, Wayne, Danihelka · 2014",
+        "Deep Speech 2: End-to-End Speech Recognition in English and Mandarin | Amodei et al. · 2015",
+        "Scaling Laws for Neural Language Models | Kaplan et al. · 2020",
+        "A Tutorial Introduction to the Minimum Description Length Principle | Grünwald · 2004",
+        "Machine Super Intelligence | Shane Legg (PhD thesis) · 2008",
+        "Kolmogorov Complexity and Algorithmic Randomness | Shen, Uspensky, Vereshchagin (book) · 2017",
+        "CS231n: Convolutional Neural Networks for Visual Recognition | Stanford course",
+      ]],
+      ["AI · LLM essentials", [
+        "Efficient Estimation of Word Representations in Vector Space (word2vec) | Mikolov et al. · 2013",
+        "Sequence to Sequence Learning with Neural Networks | Sutskever, Vinyals, Le · 2014",
+        "Adam: A Method for Stochastic Optimization | Kingma & Ba · 2014",
+        "Dropout: A Simple Way to Prevent Neural Networks from Overfitting | Srivastava et al. · 2014",
+        "BERT: Pre-training of Deep Bidirectional Transformers | Devlin et al. · 2018",
+        "Improving Language Understanding by Generative Pre-Training (GPT-1) | Radford et al. · 2018",
+        "Language Models are Unsupervised Multitask Learners (GPT-2) | Radford et al. · 2019",
+        "Language Models are Few-Shot Learners (GPT-3) | Brown et al. · 2020",
+        "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer (T5) | Raffel et al. · 2019",
+        "Training Compute-Optimal Large Language Models (Chinchilla) | Hoffmann et al. · 2022",
+        "RoFormer: Enhanced Transformer with Rotary Position Embedding (RoPE) | Su et al. · 2021",
+        "Switch Transformers: Scaling to Trillion Parameter Models (Mixture of Experts) | Fedus et al. · 2021",
+        "LLaMA: Open and Efficient Foundation Language Models | Touvron et al. · 2023",
+        "An Image is Worth 16x16 Words (ViT) | Dosovitskiy et al. · 2020",
+        "Learning Transferable Visual Models From Natural Language Supervision (CLIP) | Radford et al. · 2021",
+        "Denoising Diffusion Probabilistic Models | Ho, Jain, Abbeel · 2020",
+        "Mamba: Linear-Time Sequence Modeling with Selective State Spaces | Gu & Dao · 2023",
+        "DeepSeek-V3 Technical Report | DeepSeek-AI · 2024",
+        "Scaling Monosemanticity (interpretability) | Anthropic · 2024",
+      ]],
+      ["AI · Training, alignment & fine-tuning", [
+        "Deep Reinforcement Learning from Human Preferences | Christiano et al. · 2017",
+        "Training Language Models to Follow Instructions with Human Feedback (InstructGPT) | Ouyang et al. · 2022",
+        "Constitutional AI: Harmlessness from AI Feedback | Bai et al. · 2022",
+        "Direct Preference Optimization (DPO) | Rafailov et al. · 2023",
+        "LoRA: Low-Rank Adaptation of Large Language Models | Hu et al. · 2021",
+        "QLoRA: Efficient Finetuning of Quantized LLMs | Dettmers et al. · 2023",
+        "Distilling the Knowledge in a Neural Network | Hinton, Vinyals, Dean · 2015",
+        "Let's Verify Step by Step (process reward models) | Lightman et al. · 2023",
+        "DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning | DeepSeek-AI · 2025",
+        "Megatron-LM: Training Multi-Billion Parameter Language Models Using Model Parallelism | Shoeybi et al. · 2019",
+        "ZeRO: Memory Optimizations Toward Training Trillion Parameter Models | Rajbhandari et al. · 2019",
+      ]],
+      ["AI · Inference & serving", [
+        "FlashAttention: Fast and Memory-Efficient Exact Attention | Dao et al. · 2022",
+        "Efficient Memory Management for LLM Serving with PagedAttention (vLLM) | Kwon et al. · 2023",
+        "Orca: A Distributed Serving System for Transformer-Based Generative Models (continuous batching) | Yu et al. · 2022",
+        "Fast Inference from Transformers via Speculative Decoding | Leviathan et al. · 2022",
+        "Efficiently Scaling Transformer Inference | Pope et al. · 2022",
+        "GQA: Training Generalized Multi-Query Transformer Models | Ainslie et al. · 2023",
+        "LLM.int8(): 8-bit Matrix Multiplication for Transformers at Scale | Dettmers et al. · 2022",
+        "GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers | Frantar et al. · 2022",
+        "AWQ: Activation-aware Weight Quantization | Lin et al. · 2023",
+      ]],
+      ["AI · RAG & retrieval", [
+        "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks | Lewis et al. · 2020",
+        "Dense Passage Retrieval for Open-Domain Question Answering (DPR) | Karpukhin et al. · 2020",
+        "Sentence-BERT: Sentence Embeddings using Siamese BERT-Networks | Reimers & Gurevych · 2019",
+        "ColBERT: Efficient and Effective Passage Search via Late Interaction | Khattab & Zaharia · 2020",
+        "Efficient and Robust Approximate Nearest Neighbor Search Using HNSW Graphs | Malkov & Yashunin · 2016",
+        "Precise Zero-Shot Dense Retrieval without Relevance Labels (HyDE) | Gao et al. · 2022",
+        "Lost in the Middle: How Language Models Use Long Contexts | Liu et al. · 2023",
+        "RAGAS: Automated Evaluation of Retrieval Augmented Generation | Es et al. · 2023",
+        "Introducing Contextual Retrieval | Anthropic · 2024",
+      ]],
+      ["AI · Prompting, agents & evals", [
+        "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models | Wei et al. · 2022",
+        "Self-Consistency Improves Chain of Thought Reasoning | Wang et al. · 2022",
+        "ReAct: Synergizing Reasoning and Acting in Language Models | Yao et al. · 2022",
+        "Toolformer: Language Models Can Teach Themselves to Use Tools | Schick et al. · 2023",
+        "Reflexion: Language Agents with Verbal Reinforcement Learning | Shinn et al. · 2023",
+        "Tree of Thoughts: Deliberate Problem Solving with LLMs | Yao et al. · 2023",
+        "Generative Agents: Interactive Simulacra of Human Behavior | Park et al. · 2023",
+        "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena | Zheng et al. · 2023",
+        "SWE-bench: Can Language Models Resolve Real-World GitHub Issues? | Jimenez et al. · 2023",
+        "Not What You've Signed Up For: Indirect Prompt Injection | Greshake et al. · 2023",
+        "Building Effective Agents | Anthropic · 2024",
+        "Model Context Protocol specification | Anthropic · 2024",
+        "Effective Context Engineering for AI Agents | Anthropic · 2025",
+      ]],
+    ],
+  },
+  {
+    id: "puzzles", title: "🧩 Puzzles & quiz", color: "#c026d3", checked: "solved",
+    groups: [
+      ["Classic logic puzzles", [
+        "25 horses, 5 tracks: find the fastest 3 | 7 races",
+        "2 eggs, 100 floors: fewest drops in the worst case | 14",
+        "12 coins, one fake (heavier or lighter), 3 weighings",
+        "8 balls, one heavier, 2 weighings | split 3-3-2",
+        "Burning ropes: measure 45 minutes with two 1-hour ropes | light one at both ends",
+        "3 L and 5 L jugs: measure exactly 4 L",
+        "Bridge & torch: 4 people taking 1, 2, 5, 10 min | 17 minutes",
+        "1000 wine bottles, one poisoned, 10 rats | binary encoding",
+        "100 doors toggled on 100 passes: which stay open? | perfect squares",
+        "3 switches, 1 bulb in another room, one visit | use the bulb's heat",
+        "Mislabelled jars of apples, oranges, mixed | pick from 'mixed'",
+        "Chessboard with opposite corners removed: tile with dominoes? | no, colour argument",
+        "4-min and 7-min hourglasses: measure 9 minutes",
+        "Two doors, two guards, one always lies | ask what the other guard would say",
+        "Prisoners in a line with red/blue hats: save the most | first one says parity",
+        "Wolf, goat & cabbage river crossing",
+        "5 pirates dividing 100 gold coins | backward induction",
+        "Angle between clock hands at 3:15 | 7.5°",
+        "How many times do clock hands overlap in a day? | 22",
+        "10 pill bottles, one has heavier pills, one weighing | take i pills from bottle i",
+        "3 ants on a triangle's corners walk randomly: chance of no collision | 1/4",
+      ]],
+      ["Probability & math", [
+        "Monty Hall: switch or stay? | switch, 2/3",
+        "Birthday paradox: people needed for a 50% shared birthday | 23",
+        "Expected coin tosses to get two heads in a row | 6",
+        "Chance of at least one 6 in 4 rolls | 1 − (5/6)⁴ ≈ 52%",
+        "Break a stick at 2 random points: chance the pieces form a triangle | 1/4",
+        "Two children, at least one is a boy: chance both are boys | 1/3",
+        "Build rand7() from rand5() | rejection sampling",
+        "A fair result from a biased coin | von Neumann: HT vs TH",
+        "Expected rolls to see all 6 faces of a die | 14.7 (coupon collector)",
+        "Trailing zeros in 100! | 24",
+        "Find the missing number in 1..n | n(n+1)/2 or XOR",
+      ]],
+      ["Estimation (Fermi)", [
+        "How many piano tuners are there in Bangalore?", "How many golf balls fit in a bus?",
+        "Storage for 1 year of WhatsApp messages", "Estimate Google search QPS",
+        "Servers needed for 1M daily active users", "Bandwidth to stream video to 10M concurrent viewers",
+        "Powers of two | 2¹⁰ ≈ 1 thousand, 2²⁰ ≈ 1 million, 2³⁰ ≈ 1 billion",
+        "Latency numbers | L1 0.5 ns, RAM 100 ns, SSD 100 µs, same-region RTT 0.5 ms, cross-continent 150 ms",
+      ]],
+      ["Coding quick-fire", [
+        "Swap two numbers without a temp variable | XOR or arithmetic",
+        "Is n a power of 2? | n > 0 and n & (n−1) == 0",
+        "Find the duplicate in n+1 numbers, O(1) space | Floyd's cycle detection",
+        "Detect a cycle / find the middle of a linked list in one pass",
+        "Why is 0.1 + 0.2 != 0.3? | binary floating point",
+        "Why mid = lo + (hi − lo) / 2? | integer overflow",
+        "Implement atoi safely | spaces, sign, overflow",
+        "First non-repeating character in a string",
+        "Rotate an array by k in place | three reversals",
+        "Rotate a matrix 90° in place | transpose + reverse rows",
+        "Reverse the words in a sentence in place",
+        "Count set bits | Brian Kernighan's trick",
+      ]],
+      ["Python gotchas", [
+        "Mutable default arguments | def f(x=[])", "[[0] * 3] * 3 shares the same row",
+        "Late-binding closures in loops | lambda i=i", "is vs == | small-int caching −5..256",
+        "Shallow vs deep copy", "GIL: threads vs processes vs asyncio for CPU vs I/O work",
+        "Generators can be consumed only once", "return inside finally swallows the exception",
+        "Modifying a list while iterating over it", "Why can't a list be a dict key? | hashability",
+        "*args, **kwargs & keyword-only arguments", "Decorators & functools.wraps",
+      ]],
+      ["Linux & DevOps quiz", [
+        "What happens when you run ls -l? | shell, fork, exec, syscalls",
+        "Linux boot process | UEFI → bootloader → kernel → systemd",
+        "kill vs kill -9 | SIGTERM vs SIGKILL", "Zombie vs orphan processes",
+        "Disk full but du shows little | deleted files still open, lsof +L1",
+        "'No space left' but df shows free space | out of inodes",
+        "Hard link vs soft link", "chmod 4755, setuid & sticky bit",
+        "Load average 4.0 on 2 cores: what does it mean?", "Where did my free memory go? | page cache",
+        "How does SSH key authentication work?", "set -euo pipefail: what each flag does",
+        "Containers vs VMs | namespaces & cgroups",
+        "Terraform: count vs for_each, state locking, import, drift",
+      ]],
+      ["Kubernetes & Docker quiz", [
+        "CMD vs ENTRYPOINT", "COPY vs ADD, ARG vs ENV", "Why does Dockerfile order matter? | layer cache",
+        "What happens when you run kubectl apply? | API server → etcd → scheduler → kubelet",
+        "Pod stuck in Pending: why? | resources, taints, PVC, affinity",
+        "CrashLoopBackOff vs ImagePullBackOff vs OOMKilled",
+        "Liveness vs readiness vs startup probes",
+        "Requests vs limits | CPU throttling vs OOM kill, QoS classes",
+        "Deployment vs StatefulSet vs DaemonSet",
+        "Delete a pod owned by a Deployment: what happens?",
+        "How does a Service find its pods? | labels, EndpointSlices",
+        "Graceful shutdown | preStop, SIGTERM, terminationGracePeriodSeconds",
+        "Zero-downtime rollout and rollback",
+      ]],
+      ["Networking quiz", [
+        "TCP handshake: why three steps, not two?", "How does traceroute work? | TTL + ICMP time exceeded",
+        "Does ping use a port? | no, ICMP", "Usable hosts in a /26 | 62",
+        "Why does DNS use UDP, and when TCP?", "502 vs 503 vs 504",
+        "Can two processes listen on the same port? | SO_REUSEPORT",
+        "Why is the first request slow? | DNS + TCP + TLS", "Why can't a CNAME sit at the zone apex?",
+        "Why do overlapping CIDRs break VPC peering?", "HTTP is stateless: how do you stay logged in?",
+      ]],
+      ["SQL tricky queries", [
+        "Second / Nth highest salary", "Find duplicates; delete them but keep one",
+        "Employees earning more than their manager | self-join",
+        "Top N per group | ROW_NUMBER() OVER (PARTITION BY …)",
+        "Running total & moving average | window functions",
+        "Users who logged in on consecutive days | gaps & islands",
+        "WHERE vs HAVING", "COUNT(*) vs COUNT(col) vs COUNT(DISTINCT col)", "UNION vs UNION ALL",
+        "NULL traps | NULL = NULL, NOT IN with NULLs", "RANK vs DENSE_RANK vs ROW_NUMBER",
+        "Join row counts | INNER vs LEFT vs FULL vs CROSS",
+        "Why is this query slow? | EXPLAIN, missing index, function on an indexed column",
+      ]],
+      ["System design quick-fire", [
+        "Unique IDs across 100 servers", "Count unique visitors per day | HyperLogLog",
+        "Top-K trending hashtags in real time",
+        "The cache goes down: what happens to the DB? | thundering herd",
+        "One key gets 50% of the traffic | hot key", "Make a payment API safe to retry | idempotency keys",
+        "Delete 1B rows from a live table", "Push vs pull for a news feed | fan-out on write vs read",
+        "Polling vs WebSockets vs SSE", "Why not just add more servers?",
+      ]],
+      ["Behavioural & HR curveballs", [
+        "Why are you leaving your current company?", "Why should we hire you over the others?",
+        "A failure or production incident you caused", "A disagreement with your manager or a senior",
+        "Your biggest weakness | a real one + what you're doing about it",
+        "Where do you see yourself in 5 years?", "What's your current and expected CTC?",
+        "You have another offer: why us?", "A time you had to learn something fast",
+        "A decision you made with incomplete data", "How do you handle on-call pressure?",
+        "Do you have any questions for us?",
       ]],
     ],
   },
 ];
+
+const LINK_LISTS = new Set(LISTS.filter(l => l.links).map(l => l.id));
 
 const STORE_KEY = "jobSwitchLists.v1";
 // state: { status: { [key]: "doing" | "done" }, extra: { [listId]: [name, ...] },
@@ -555,17 +1390,63 @@ const PLANNER_LISTS = [
 // Notes sections: one per list in the same colours (plus General on the job page)
 const NOTE_NAMES = {
   general: "General", courses: "Courses", companies: "Companies", jobprep: "Job prep", projects: "Projects", skills: "DevOps",
-  sysdesign: "System design", ai: "AI", backend: "Backend", dsa: "DSA",
+  sysdesign: "System design", ai: "AI", backend: "Backend", dsa: "DSA", algorithms: "Algorithms",
+  networking: "Networking", aws: "AWS", papers: "Papers", puzzles: "Puzzles",
   office: "Office", personal: "Personal", gym: "Gym", diet: "Diet",
 };
 const noteSections = (lists, extra = []) =>
-  [...extra, ...lists.map(l => ({ id: l.id, color: l.color }))].map(s => ({ ...s, name: NOTE_NAMES[s.id] || s.id }));
+  [...extra, ...lists.map(l => ({ id: l.id, color: l.color, name: l.short }))].map(s => ({ ...s, name: NOTE_NAMES[s.id] || s.name || s.id }));
+
+// Reels and Patterns tabs: one list per category, built from data/reels.js and data/patterns.js.
+// ITEM_INFO[listId][item] adds actions to built-in items: a copyable /reel-script prompt or a doc link.
+const ITEM_INFO = new Map();
+const PALETTE = ["#2563eb", "#0d9488", "#7c3aed", "#db2777", "#ea580c", "#16a34a", "#0891b2", "#ca8a04", "#dc2626",
+  "#4f46e5", "#65a30d", "#9333ea", "#0369a1", "#be123c", "#15803d", "#b45309", "#475569"];
+const REEL_PRIO = { 1: " 🔥", 2: "", 3: " · advanced" };
+const REEL_LISTS = (typeof REEL_DATA === "undefined" ? [] : REEL_DATA).map((c, ci) => {
+  const id = `reel-${c.id}`, info = new Map();
+  ITEM_INFO.set(id, info);
+  return {
+    id, title: `${c.icon} ${c.name}`, short: c.name, color: PALETTE[ci % PALETTE.length], checked: "published",
+    // One section per series (🔥 = interview core); parts are numbered in publishing order
+    groups: c.series.map(s => [s.t + REEL_PRIO[s.p], s.parts.map(([title, problem], i) => {
+      const item = `${i + 1}. ${title} | ${problem}`;
+      info.set(item, { reel: [c, s, i] });
+      return item;
+    })]),
+  };
+});
+const LEVELS = { 1: "Foundation", 2: "Intermediate", 3: "Advanced" };
+const PATTERN_LISTS = (typeof PATTERN_DATA === "undefined" ? [] : PATTERN_DATA).map((c, ci) => {
+  const id = `pat-${c.id}`, info = new Map(), groups = new Map();
+  ITEM_INFO.set(id, info);
+  // Categories with their own groups keep them (level shown per item); the rest are grouped by level
+  const grouped = c.items.some(it => it.g);
+  for (const it of c.items) {
+    const g = grouped ? it.g || "Other" : LEVELS[it.lvl];
+    const item = grouped ? `${it.t} | ${LEVELS[it.lvl]}` : it.t;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(item);
+    if (it.doc) info.set(item, { doc: it.doc });
+  }
+  const order = grouped ? [...groups.keys()] : Object.values(LEVELS).filter(g => groups.has(g));
+  return { id, title: c.title, short: c.short, color: PALETTE[ci % PALETTE.length], checked: "learned", groups: order.map(g => [g, groups.get(g)]) };
+});
 
 const PAGES = [
-  { id: "jobs", title: "🚀 Job switch", lists: LISTS, notes: noteSections(LISTS, [{ id: "general", color: "#64748b" }]) },
-  { id: "planner", title: "📅 Weekly planner", lists: PLANNER_LISTS, notes: noteSections(PLANNER_LISTS) },
+  { id: "roadmap", title: "🗺️ Roadmap", render: () => renderRoadmap() },
+  // switcher: show one list at a time (its sections side by side), picked from a row of tabs
+  { id: "jobs", title: "🚀 Job switch", short: "Job switch", lists: LISTS, switcher: true, search: "Search topics, papers, puzzles…",
+    notes: noteSections(LISTS, [{ id: "general", color: "#64748b" }]) },
+  ...(REEL_LISTS.length ? [{ id: "reels", title: "🎬 Reels", short: "Reels", lists: REEL_LISTS, switcher: true,
+    search: "Search reels, e.g. kafka, cold start…", notes: noteSections(REEL_LISTS, [{ id: "reels-general", name: "General", color: "#64748b" }]) }] : []),
+  ...(PATTERN_LISTS.length ? [{ id: "patterns", title: "🏗️ Patterns", short: "Patterns", lists: PATTERN_LISTS, switcher: true,
+    search: "Search patterns, e.g. redlock, websocket…", notes: noteSections(PATTERN_LISTS, [{ id: "patterns-general", name: "General", color: "#64748b" }]) }] : []),
+  { id: "planner", title: "📅 Weekly planner", short: "Planner", lists: PLANNER_LISTS, search: "Search this week…", notes: noteSections(PLANNER_LISTS) },
   { id: "settings", title: "⚙️ Settings", render: () => renderSettingsPage() },
 ];
+// Every list with its page, for the roadmap's progress chips and jumps
+const LIST_PAGE = new Map(PAGES.flatMap(p => (p.lists || []).map(l => [l.id, { l, page: p }])));
 
 function load() {
   try { return migrate(JSON.parse(localStorage.getItem(STORE_KEY) || "{}")); }
@@ -573,7 +1454,7 @@ function load() {
 }
 // Fills in defaults and upgrades older saves (also used for data coming from Google Drive)
 function migrate(saved) {
-  const s = { status: {}, extra: {}, notes: {}, noteTab: {}, collapsed: {}, page: "jobs", updatedAt: 0, ...saved };
+  const s = { status: {}, extra: {}, notes: {}, noteTab: {}, collapsed: {}, section: {}, page: "jobs", updatedAt: 0, ...saved };
   // Older saves only had checkboxes: { checked: { [key]: true } }
   if (s.checked) { for (const k in s.checked) s.status[k] ||= "done"; delete s.checked; }
   // Older saves had a single notes string, and one note tab for the only page
@@ -619,12 +1500,21 @@ function itemRow(listId, item, custom) {
   }
   const [name, sub] = item.split(" | ");
   const k = keyOf(listId, item), s = state.status[k] || "todo";
+  // Lists with `links` (Papers) get a ↗ that searches the web for the item; Patterns items link to their doc
+  const info = custom ? null : ITEM_INFO.get(listId)?.get(item);
+  const link = LINK_LISTS.has(listId)
+    ? `<a class="act" href="https://www.google.com/search?q=${encodeURIComponent(`${name} ${sub || ""}`.replace("·", ""))}"
+        target="_blank" rel="noopener" title="Find it on the web">↗</a>`
+    : info?.doc ? `<a class="act" href="${esc(info.doc[1])}" target="_blank" rel="noopener" title="📖 ${esc(info.doc[0])}">↗</a>` : "";
+  // Reels get a ⧉ that copies a /reel-script prompt for that part
+  const copy = info?.reel
+    ? `<button class="act" data-copy-list="${esc(listId)}" data-copy="${esc(item)}" title="Copy a /reel-script prompt for this part">⧉</button>` : "";
   return `<div class="item ${s}" data-key="${esc(k)}">
     <button class="st ${s}" title="${STATUS_LABEL[s]}, click to change" aria-label="${esc(name)}: ${STATUS_LABEL[s]}"></button>
     <span class="txt"><span class="name">${hl(name)}</span>${sub ? ` <span class="sub">· ${hl(sub)}</span>` : ""}</span>
-    ${custom ? `<span class="acts">
-      <button class="act" data-edit-list="${esc(listId)}" data-edit-item="${esc(item)}" title="Edit">✎</button>
-      <button class="act" data-del-list="${esc(listId)}" data-del="${esc(item)}" title="Remove">✕</button>
+    ${custom || link || copy ? `<span class="acts">${link}${copy}
+      ${custom ? `<button class="act" data-edit-list="${esc(listId)}" data-edit-item="${esc(item)}" title="Edit">✎</button>
+      <button class="act" data-del-list="${esc(listId)}" data-del="${esc(item)}" title="Remove">✕</button>` : ""}
     </span>` : ""}
   </div>`;
 }
@@ -653,12 +1543,45 @@ function sectionsOf(l) {
   return secs;
 }
 
-function renderList(l) {
-  const secs = sectionsOf(l);
-  const keys = secs.flatMap(s => s.items.map(([i]) => keyOf(s.key, i)));
+// Sticky card header: title, "◐ doing · done / total", and the progress bar
+function cardHead(title, keys, checked) {
   const count = st => keys.filter(k => state.status[k] === st).length;
   const done = count("done"), doing = count("doing");
   const w = n => (keys.length ? (n / keys.length) * 100 : 0);
+  return `<div class="head">
+      <h2>${title}<span class="count">${doing ? `◐ ${doing} · ` : ""}${done} / ${keys.length} ${checked}</span></h2>
+      <div class="meter"><span style="width:${w(done)}%"></span><span class="doing" style="width:${w(doing)}%"></span></div>
+    </div>`;
+}
+
+function addForm(l) {
+  return `<form data-list="${l.id}">
+      ${l.perGroup ? `<select name="group" aria-label="Day">${l.groups.map(([g]) => `<option ${g === TODAY ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>` : ""}
+      <input name="item" placeholder="Add…" required><button>Add</button>
+    </form>`;
+}
+
+// One list on its own: each of its sections becomes a card, and "Added by me" (with the add form) comes last
+function renderSectionCards(l) {
+  const secs = sectionsOf(l);
+  if (!secs.some(s => s.name === "Added by me")) secs.push({ name: "Added by me", key: l.id, items: [] });
+  const cards = secs.map(s => {
+    const added = s.name === "Added by me";
+    const rows = s.items.filter(([i]) => matches(i, keyOf(s.key, i)));
+    if (filtering() && !rows.length) return "";
+    return `<section class="card" style="--accent:${l.color}">
+      ${cardHead(esc(s.name), s.items.map(([i]) => keyOf(s.key, i)), l.checked)}
+      ${rows.length ? rows.map(([i, custom]) => itemRow(s.key, i, custom)).join("") : '<div class="empty">Add your own items below</div>'}
+      ${added ? addForm(l) : ""}
+    </section>`;
+  }).join("");
+  return cards || `<section class="card" style="--accent:${l.color}">${cardHead(l.title, [], l.checked)}
+    <div class="empty">No matches in ${esc(l.title)}. The tabs above show where the matches are.</div></section>`;
+}
+
+function renderList(l) {
+  const secs = sectionsOf(l);
+  const keys = secs.flatMap(s => s.items.map(([i]) => keyOf(s.key, i)));
   const body = secs.map(s => {
     const rows = s.items.filter(([i]) => matches(i, keyOf(s.key, i)));
     if (filtering() && !rows.length) return "";
@@ -672,16 +1595,49 @@ function renderList(l) {
       ${open ? (rows.length ? rows.map(([i, custom]) => itemRow(s.key, i, custom)).join("") : '<div class="empty">Nothing yet</div>') : ""}`;
   }).join("");
   return `<section class="card" style="--accent:${l.color}">
-    <div class="head">
-      <h2>${l.title}<span class="count">${doing ? `◐ ${doing} · ` : ""}${done} / ${keys.length} ${l.checked}</span></h2>
-      <div class="meter"><span style="width:${w(done)}%"></span><span class="doing" style="width:${w(doing)}%"></span></div>
-    </div>
+    ${cardHead(l.title, keys, l.checked)}
     ${body || '<div class="empty">No matches</div>'}
-    <form data-list="${l.id}">
-      ${l.perGroup ? `<select name="group" aria-label="Day">${l.groups.map(([g]) => `<option ${g === TODAY ? "selected" : ""}>${esc(g)}</option>`).join("")}</select>` : ""}
-      <input name="item" placeholder="Add…" required><button>Add</button>
-    </form>
+    ${addForm(l)}
   </section>`;
+}
+
+// Section switcher: the saved choice for this page, falling back to its first list
+const ALL = "all";
+function currentSection(page) {
+  if (!page.switcher) return ALL;
+  const s = state.section[page.id];
+  return s === ALL || page.lists.some(l => l.id === s) ? s : page.lists[0].id;
+}
+
+function renderSections(page) {
+  const el = document.getElementById("sections");
+  if (!page.switcher) { el.innerHTML = ""; return; }
+  const cur = currentSection(page);
+  // Per list: done / total, or how many items match while searching / filtering
+  const stats = page.lists.map(l => {
+    const items = sectionsOf(l).flatMap(s => s.items.map(([i]) => [i, keyOf(s.key, i)]));
+    return {
+      l, total: items.length,
+      done: items.filter(([, k]) => state.status[k] === "done").length,
+      hits: items.filter(([i, k]) => matches(i, k)).length,
+    };
+  });
+  const sum = f => stats.reduce((n, s) => n + s[f], 0);
+  const tab = (id, label, color, total, done, hits) =>
+    `<button class="stab ${id === cur ? "active" : ""} ${filtering() && !hits ? "dim" : ""}" style="--c:${color}" data-switch="${id}">
+      ${label}<small>${filtering() ? `${hits} found` : `${done}/${total}`}</small></button>`;
+  el.innerHTML = tab(ALL, "All", "#64748b", sum("total"), sum("done"), sum("hits")) +
+    stats.map(s => tab(s.l.id, s.l.title, s.l.color, s.total, s.done, s.hits)).join("");
+  // On narrow screens the row scrolls sideways: keep the chosen tab visible
+  el.querySelector(".active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+
+// All (or a page without the switcher): one column per list. One list: its sections in a grid.
+const boardClass = page => (page.render ? "page" : currentSection(page) === ALL ? "board" : "split");
+function renderBoard(page) {
+  const cur = currentSection(page);
+  if (cur === ALL) return page.lists.map(renderList).join("") + renderNotes(page);
+  return `<div class="cols"><div class="masonry">${renderSectionCards(page.lists.find(l => l.id === cur))}</div></div>` + renderNotes(page);
 }
 
 const pad = n => String(n).padStart(2, "0");
@@ -872,6 +1828,205 @@ function googleSettings() {
     </div>`;
 }
 
+// ---------------------------------------------------------------------------
+// Roadmap: one plan across every tab, aimed at a DevOps / SRE / platform job first.
+// Assumes ~15 h a week next to a full-time job: 26 weeks ≈ 390 h. Weeks count from the start date (editable).
+// track: [listId, section name prefix?]: chips that show live progress from the other tabs and jump there.
+// ---------------------------------------------------------------------------
+const RM_WEEKS = 26, RM_HOURS_PER_WEEK = 15;
+const ROADMAP = [
+  { id: "p1", title: "Foundations refresh", weeks: [1, 3], hours: 45, color: "#0d9488",
+    goal: "Linux, scripting, Git and networking until you can troubleshoot a box without googling every command.",
+    tasks: [
+      "Linux: processes, permissions, systemd, logs, disk/CPU/memory troubleshooting",
+      "Bash + awk / sed / jq: automate one real task from work",
+      "Networking: OSI & TCP/IP, DNS, HTTP, TLS, subnetting, Nginx as a reverse proxy",
+      "Git: rebase, reflog, bisect, branching strategies",
+      "Resume + LinkedIn headline rewritten for DevOps roles (first draft)",
+      "Reels: 2 a week from what you studied (Linux, Git, networking)",
+    ],
+    track: [["skills", "OS & terminal"], ["skills", "Programming & scripting"], ["skills", "Networking & protocols"],
+      ["networking"], ["jobprep", "Profile"], ["reel-devops", "Linux for DevOps"], ["reel-devops", "Git & Branching"], ["reel-networking"]] },
+  { id: "p2", title: "Containers & Kubernetes → pass the CKA", weeks: [4, 8], hours: 75, color: "#2563eb",
+    goal: "The single most asked-for DevOps skill. A CKA on the resume gets you past most screens.",
+    tasks: [
+      "Docker: images, layers, multi-stage builds, image optimisation",
+      "Kubernetes: workloads, services, ingress, storage, RBAC, troubleshooting",
+      "KodeKloud CKA course + labs + mock exams",
+      "Book the CKA for the end of week 8 and pass it",
+      "Helm & Kustomize basics",
+      "Project: production-grade Helm chart on a local cluster",
+    ],
+    track: [["skills", "Containers & orchestration"], ["networking", "Container & Kubernetes networking"], ["courses", "KodeKloud"],
+      ["projects", "DevOps / platform"], ["puzzles", "Kubernetes & Docker quiz"], ["reel-devops", "Docker & Containers"], ["reel-devops", "Kubernetes"]] },
+  { id: "p3", title: "AWS + Terraform", weeks: [9, 12], hours: 44, color: "#ea580c",
+    goal: "Cloud + IaC, and turn your day job into interview stories with the Patterns tab.",
+    tasks: [
+      "AWS core: IAM, VPC, EC2 + ALB, S3, RDS, ECS / EKS, Lambda",
+      "Terraform: state, modules, workspaces, drift, policy as code",
+      "Project: EKS from scratch with Terraform",
+      "Patterns: Foundation topics in Lambda, Messaging, Config and Resilience",
+      "Write your \"explain your current architecture end to end\" answer",
+    ],
+    track: [["aws"], ["skills", "Cloud"], ["skills", "IaC & configuration management"], ["pat-lambda"], ["pat-resilience"],
+      ["reel-aws"], ["reel-devops", "Infrastructure as Code"], ["jobprep", "Interview prep"]] },
+  { id: "p4", title: "CI/CD, GitOps & DevSecOps", weeks: [13, 16], hours: 44, color: "#7c3aed",
+    goal: "Ship safely: pipelines, GitOps, progressive delivery and a secure supply chain.",
+    tasks: [
+      "GitHub Actions: reusable workflows, matrix builds, caching, OIDC to AWS",
+      "ArgoCD + Argo Rollouts: GitOps with canary deploys",
+      "Secrets: Vault / External Secrets, SOPS",
+      "Supply chain: Trivy, SBOM with Syft, cosign, Kyverno",
+      "Project: GitOps delivery + secure supply chain",
+    ],
+    track: [["skills", "CI/CD, GitOps & artifacts"], ["skills", "Secrets & security"], ["pat-cicd"], ["pat-buildeploy"],
+      ["reel-devops", "CI/CD"], ["reel-devops", "Deployment Strategies"], ["reel-devops", "GitOps"], ["reel-devops", "DevSecOps"]] },
+  { id: "p5", title: "Observability & SRE", weeks: [17, 19], hours: 33, color: "#dc2626",
+    goal: "Metrics, logs, traces, SLOs and incidents: what separates senior DevOps / SRE candidates.",
+    tasks: [
+      "Prometheus, Alertmanager, Grafana, Loki, OpenTelemetry",
+      "Golden signals, RED / USE, SLOs & error budgets",
+      "Incident management + blameless postmortems (Google SRE book chapters)",
+      "Project: observability stack + a chaos test with a written postmortem",
+    ],
+    track: [["skills", "Observability & SRE"], ["pat-observability"], ["reel-observability"], ["reel-devops", "SRE & Incident Management"],
+      ["courses", "Free resources"]] },
+  { id: "p6", title: "Capstone, AI-infra edge & offers", weeks: [20, 26], hours: 77, color: "#16a34a",
+    goal: "Finish the showcase project, add an AI-infra edge, and close offers.",
+    tasks: [
+      "Finish the ai-platform-lab capstone and write 2–4 blog posts about it",
+      "AI-infra edge: one of LLM serving on Kubernetes / AI gateway / AI SRE agent",
+      "Apply Tier 1 → Tier 0 with referrals",
+      "Company-specific prep before each interview loop",
+      "Negotiate with competing offers; plan the notice period",
+    ],
+    track: [["projects", "AI"], ["ai", "Model serving & AI infra"], ["ai", "LLMOps"], ["companies", "Tier 1"], ["companies", "Tier 0"], ["jobprep", "Offer"]] },
+  { id: "lane", title: "Interview prep & applying (alongside)", weeks: [9, 26], hours: 72, color: "#db2777", lane: true,
+    goal: "~4 h a week from week 9, next to the phase you're on. Start applying early: the first interviews are practice.",
+    tasks: [
+      "Apply: Tier 3 from week 9, Tier 2 from week 12, Tier 1 from week 16, Tier 0 from week 20",
+      "Referral list + recruiter outreach messages",
+      "8–10 STAR stories + a 2-minute \"tell me about yourself\"",
+      "Troubleshooting scenarios: Linux, Kubernetes, networking",
+      "DevOps / SRE system design: infra questions + fundamentals",
+      "Coding: easy / medium problems + practical scripting rounds (~2 h a week)",
+      "3+ mock interviews",
+    ],
+    track: [["jobprep", "Applying"], ["jobprep", "Interview prep"], ["companies", "Tier 3"], ["companies", "Tier 2"],
+      ["sysdesign", "Infra questions"], ["sysdesign", "Fundamentals"], ["dsa", "Practical coding rounds"], ["puzzles", "Linux & DevOps quiz"],
+      ["puzzles", "Behavioural"]] },
+];
+// Every list on every tab gets a priority: [bucket, when]. Lists not named here count as "later".
+const RM_BUCKETS = [["now", "🔥 Now", "Core of the plan"], ["next", "Next", "From week 9, for interviews"],
+  ["later", "Later", "Only what the plan names"], ["after", "⏸ After the switch", "Park until you have the offer"]];
+const RM_PRIORITY = {
+  skills: ["now", "Ph 1–5"], courses: ["now", "Ph 1–5"], networking: ["now", "Ph 1"], jobprep: ["now", "wk 1+"],
+  projects: ["now", "Ph 2–6"], aws: ["now", "Ph 3"], companies: ["now", "wk 9+"],
+  sysdesign: ["next", "wk 9+"], puzzles: ["next", "wk 9+"], dsa: ["next", "wk 9+, 2 h/wk"],
+  ai: ["later", "Ph 6"], papers: ["later", "2–3 to discuss"], backend: ["later", "as needed"], algorithms: ["after", ""],
+  "reel-devops": ["now", "Ph 1–5"], "reel-networking": ["now", "Ph 1"], "reel-aws": ["now", "Ph 3"], "reel-observability": ["now", "Ph 5"],
+  "reel-sysdesign": ["next", "wk 9+"], "reel-database": ["later", ""], "reel-backend": ["later", ""], "reel-dsa": ["later", ""],
+  "reel-dp": ["after", ""], "reel-frontend": ["after", ""],
+  "pat-resilience": ["now", "Ph 3"], "pat-cicd": ["now", "Ph 4"], "pat-buildeploy": ["now", "Ph 4"], "pat-observability": ["now", "Ph 5"],
+  "pat-lambda": ["next", "Ph 3"], "pat-messaging": ["next", "Ph 3"], "pat-config": ["next", "Ph 3"], "pat-security": ["next", "Ph 4"],
+  "pat-aieng": ["later", "Ph 6"], "pat-concurrency": ["later", ""], "pat-data": ["later", ""], "pat-apigw": ["later", ""],
+  "pat-codegen": ["later", ""], "pat-framework": ["after", ""], "pat-ia": ["after", ""], "pat-naviflow": ["after", ""], "pat-agentcfg": ["after", ""],
+};
+
+const dateOf = iso => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
+const fmtDay = d => d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+function roadmapStart() {
+  if (!state.roadmapStart) { // first visit: start this week's Monday
+    const d = new Date();
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    state.roadmapStart = isoOf(d);
+    save();
+  }
+  return dateOf(state.roadmapStart);
+}
+const weekStart = (start, w) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + (w - 1) * 7);
+
+// done / total for a list (or its sections starting with `prefix`), wherever it lives
+function progressOf(listId, prefix) {
+  const hit = LIST_PAGE.get(listId);
+  if (!hit) return null;
+  const keys = sectionsOf(hit.l).filter(s => !prefix || s.name.startsWith(prefix)).flatMap(s => s.items.map(([i]) => keyOf(s.key, i)));
+  return { ...hit, done: keys.filter(k => state.status[k] === "done").length, total: keys.length };
+}
+function refChip(listId, prefix, extra = "") {
+  const p = progressOf(listId, prefix);
+  if (!p) return "";
+  return `<button class="rm-ref" style="--c:${p.l.color}" data-jump="${p.page.id}|${listId}" title="Open in ${esc(p.page.short)}">
+    <span class="rm-tab">${esc(p.page.short)}</span> ${esc(p.l.title)}${prefix ? ` › ${esc(prefix)}` : ""}
+    <small>${extra ? `${esc(extra)} · ` : ""}${p.done}/${p.total}</small></button>`;
+}
+
+function renderRoadmap() {
+  const start = roadmapStart();
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const week = Math.floor((today - start) / (7 * 864e5)) + 1;
+  const inWeeks = (ph, w) => w >= ph.weeks[0] && w <= ph.weeks[1];
+  const current = ROADMAP.find(ph => !ph.lane && inWeeks(ph, week));
+  const allKeys = ROADMAP.flatMap(ph => ph.tasks.map(t => keyOf(`roadmap/${ph.id}`, t)));
+  const done = allKeys.filter(k => state.status[k] === "done").length;
+  const pct = w => ((w - 1) / RM_WEEKS) * 100;
+  const nowLine = week >= 1 && week <= RM_WEEKS ? `<i class="rm-now" style="left:${pct(week + 0.5)}%"></i>` : "";
+  const range = ph => `${fmtDay(weekStart(start, ph.weeks[0]))} – ${fmtDay(new Date(weekStart(start, ph.weeks[1] + 1) - 864e5))}`;
+
+  const status = week < 1 ? `Starts ${fmtDay(start)}`
+    : week > RM_WEEKS ? `Week ${week}: past the ${RM_WEEKS}-week plan. Keep interviewing and pick from "After the switch".`
+    : `Week ${week} of ${RM_WEEKS}${current ? ` · <b>Phase ${ROADMAP.indexOf(current) + 1}: ${esc(current.title)}</b>` : ""}`;
+
+  const axis = [1, 5, 9, 13, 17, 21, 25].map(w => `<span style="left:${pct(w)}%">wk ${w}<br>${fmtDay(weekStart(start, w))}</span>`).join("");
+  const gantt = ROADMAP.map((ph, i) => `<div class="rm-row" data-scroll="rm-${ph.id}">
+      <span class="rm-label">${ph.lane ? "↔" : i + 1} ${esc(ph.title)}</span>
+      <span class="rm-track">${nowLine}<span class="rm-bar" style="--c:${ph.color};left:${pct(ph.weeks[0])}%;width:${((ph.weeks[1] - ph.weeks[0] + 1) / RM_WEEKS) * 100}%">
+        wk ${ph.weeks[0]}–${ph.weeks[1]} · ~${ph.hours} h</span></span></div>`).join("");
+
+  const cards = ROADMAP.map((ph, i) => {
+    const list = `roadmap/${ph.id}`, keys = ph.tasks.map(t => keyOf(list, t));
+    const isNow = ph === current || (ph.lane && inWeeks(ph, week));
+    return `<section class="card rm-card ${isNow ? "now" : ""}" id="rm-${ph.id}" style="--accent:${ph.color}">
+      ${cardHead(`<span>${ph.lane ? "↔" : `<span class="rm-num">${i + 1}</span>`} ${esc(ph.title)}${isNow ? ' <span class="today">now</span>' : ""}</span>`, keys, "done")}
+      <div class="small">Weeks ${ph.weeks[0]}–${ph.weeks[1]} · ${range(ph)} · ~${ph.hours} h</div>
+      <p class="rm-goal">${esc(ph.goal)}</p>
+      ${ph.tasks.map(t => itemRow(list, t, false)).join("")}
+      <div class="rm-refs-title">Track it in</div>
+      <div class="rm-refs">${ph.track.map(([l, p]) => refChip(l, p)).join("")}</div>
+    </section>`;
+  }).join("");
+
+  // Priority grid: rows = tabs, columns = buckets, so every category on every tab has a place
+  const tabs = PAGES.filter(p => p.switcher);
+  const prio = `<div class="rm-prio">
+    <div></div>${RM_BUCKETS.map(([, label, hint]) => `<div class="rm-ph"><b>${label}</b><span class="small">${hint}</span></div>`).join("")}
+    ${tabs.map(p => `<div class="rm-pt">${p.title}</div>` + RM_BUCKETS.map(([b, label]) =>
+      `<div class="rm-cell"><span class="rm-cl small">${label}</span>${p.lists.filter(l => (RM_PRIORITY[l.id] || ["later"])[0] === b)
+        .map(l => refChip(l.id, "", (RM_PRIORITY[l.id] || [])[1])).join("") || '<span class="small">—</span>'}</div>`).join("")).join("")}
+  </div>`;
+
+  return `<div class="rm-wrap">
+    <section class="panel">
+      <div class="rm-top">
+        <div><h2>🗺️ Roadmap to a DevOps job</h2>
+          <p class="small">${status} · ${done}/${allKeys.length} roadmap tasks done ·
+            ${RM_WEEKS} weeks at ~${RM_HOURS_PER_WEEK} h/week ≈ ${ROADMAP.reduce((n, ph) => n + ph.hours, 0)} h</p></div>
+        <label class="small rm-start">Start date <input type="date" id="roadmapStart" value="${state.roadmapStart}"></label>
+      </div>
+      <div class="rm-gantt">${gantt}<div class="rm-row"><span></span><span class="rm-axis">${axis}</span></div></div>
+      <p class="small">Order of attack: Linux & networking → Kubernetes (CKA) → AWS + Terraform → CI/CD & GitOps → observability & SRE → capstone.
+        Start applying in week 9 (Tier 3 first) instead of waiting until you feel ready. Each Sunday, copy next week's tasks
+        into 📅 Weekly planner › Personal. Make reels from whatever you're learning that week: teaching it is the best revision.</p>
+    </section>
+    <div class="rm-grid">${cards}</div>
+    <section class="panel">
+      <h2>What to do first, by tab</h2>
+      <p class="small">Every category on every tab, by priority for the DevOps switch. Click one to open it; the numbers are done / total.</p>
+      ${prio}
+    </section>
+  </div>`;
+}
+
 function renderSettingsPage() {
   const theme = localStorage.getItem(THEME_KEY) || "system";
   const tracked = Object.keys(state.status).length;
@@ -968,7 +2123,7 @@ function renderToolbar(page) {
   if (page.render) { tb.innerHTML = ""; return; }
   tb.innerHTML = `
     <label class="search"><input id="search" type="search" autocomplete="off" value="${esc(query)}"
-      placeholder="${page.id === "jobs" ? "Search courses, companies, skills…" : "Search this week…"}"><kbd>/</kbd></label>
+      placeholder="${page.search || "Search…"}"><kbd>/</kbd></label>
     <div class="seg" role="group" aria-label="Show">
       ${[["all", "All"], ["todo", "To do"], ["doing", "In progress"], ["done", "Done"]].map(([k, l]) =>
         `<button data-filter="${k}" class="${k === statusFilter ? "on" : ""}">${l}</button>`).join("")}
@@ -989,9 +2144,10 @@ function render() {
 // Redraws just the page content (the toolbar keeps focus while you type a search)
 function renderApp() {
   const page = currentPage();
+  renderSections(page); // here, not in render(), so the tab counts follow the search as you type
   const scroll = [app.scrollLeft, ...[...app.children].map(c => c.scrollTop)];
-  app.className = page.render ? "page" : "board";
-  app.innerHTML = page.render ? page.render() : page.lists.map(renderList).join("") + renderNotes(page);
+  app.className = boardClass(page);
+  app.innerHTML = page.render ? page.render() : renderBoard(page);
   // Re-rendering replaces the columns, so put each scroll position back
   app.scrollLeft = scroll[0];
   [...app.children].forEach((c, i) => { c.scrollTop = scroll[i + 1] || 0; });
@@ -1015,6 +2171,28 @@ function goTo(id) {
   app.scrollLeft = 0;
   save(); render();
   if (id === "planner") scrollToToday();
+}
+
+// Opens a page with one of its lists selected (used by the roadmap's chips)
+function jumpTo(pageId, listId) {
+  const page = PAGES.find(p => p.id === pageId);
+  if (!page) return;
+  if (listId && page.switcher) {
+    state.section[pageId] = listId;
+    if (page.notes.some(n => n.id === listId)) state.noteTab[pageId] = listId;
+  }
+  if (pageId === state.page) { save(); renderApp(); } else goTo(pageId);
+}
+
+function reelPrompt(c, s, i) {
+  const [title, problem] = s.parts[i];
+  const prev = s.parts.slice(0, i).map((p, j) => `  ${j + 1}. ${p[0]}`).join("\n");
+  return `/reel-script ${c.name} › ${s.t} — Part ${i + 1}: ${title}
+
+Real-world problem to open with: ${problem}
+Series bistro hook: ${s.hook}
+${i === 0 ? "This is the intro episode of the series." : `Builds on earlier parts (assume the viewer has seen them, recap in one line):\n${prev}`}
+Arc: analogy → real-world problem → how it actually works.`;
 }
 
 function commitEdit(input) {
@@ -1058,6 +2236,7 @@ app.addEventListener("submit", e => {
 });
 app.addEventListener("change", e => {
   if (e.target.dataset.data === "import" && e.target.files[0]) restoreBackup(e.target.files[0]);
+  if (e.target.id === "roadmapStart" && e.target.value) { state.roadmapStart = e.target.value; save(); renderApp(); }
 });
 app.addEventListener("keydown", e => {
   if (!("edit" in e.target.dataset)) return;
@@ -1068,6 +2247,7 @@ app.addEventListener("focusout", e => { if ("edit" in e.target.dataset) commitEd
 
 app.addEventListener("click", e => {
   const t = e.target;
+  if (t.closest("a")) return; // web links open normally, without changing the item's status
   if (t.dataset.theme) { applyTheme(t.dataset.theme); render(); return; }
   if (t.dataset.data === "export") return downloadBackup();
   if (t.dataset.data === "clear") return deleteEverything();
@@ -1077,6 +2257,16 @@ app.addEventListener("click", e => {
     document.getElementById("notes").focus();
     return;
   }
+  if (t.dataset.copyList) {
+    const [c, s, i] = ITEM_INFO.get(t.dataset.copyList).get(t.dataset.copy).reel;
+    navigator.clipboard.writeText(reelPrompt(c, s, i)).then(() => toast("Prompt copied"), () => toast("Couldn't copy the prompt"));
+    return;
+  }
+  // Roadmap: chips jump to a list, timeline rows scroll to their phase
+  const jump = t.closest("[data-jump]");
+  if (jump) { const [p, l] = jump.dataset.jump.split("|"); jumpTo(p, l); return; }
+  const to = t.closest("[data-scroll]");
+  if (to) { document.getElementById(to.dataset.scroll)?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
   if (t.dataset.editList) { editing = { list: t.dataset.editList, item: t.dataset.editItem }; renderApp(); return; }
   if (t.dataset.delList) {
     const list = t.dataset.delList, item = t.dataset.del;
@@ -1117,6 +2307,21 @@ toolbar.addEventListener("click", e => {
       for (const k of Object.keys(state.status)) if (inPlanner(k)) delete state.status[k];
     });
   }
+});
+// Section tabs: show that list on its own (or All), and open its notes alongside
+function switchSection(id) {
+  const page = currentPage();
+  if (id === currentSection(page)) return;
+  state.section[page.id] = id;
+  if (page.notes.some(n => n.id === id)) state.noteTab[page.id] = id;
+  editing = null;
+  app.innerHTML = ""; // fresh columns: don't carry the other section's scroll positions over
+  app.scrollLeft = 0;
+  save(); renderApp();
+}
+document.getElementById("sections").addEventListener("click", e => {
+  const id = e.target.closest("[data-switch]")?.dataset.switch;
+  if (id) switchSection(id);
 });
 document.getElementById("tabs").addEventListener("click", e => {
   const id = e.target.closest("[data-page]")?.dataset.page;
